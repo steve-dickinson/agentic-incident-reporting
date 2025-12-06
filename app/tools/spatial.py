@@ -6,44 +6,8 @@ incidents using Neo4j's spatial capabilities.
 """
 
 from langchain_core.tools import tool
-from neo4j import GraphDatabase
-import os
-
-
-class Neo4jConnection:
-    """Manage Neo4j database connection."""
-    
-    def __init__(self):
-        self.uri = os.getenv("NEO4J_URI", "bolt://localhost:7688")
-        self.user = os.getenv("NEO4J_USER", "neo4j")
-        self.password = os.getenv("NEO4J_PASSWORD", "")
-        self.driver = None
-    
-    def connect(self):
-        """Establish connection to Neo4j."""
-        if not self.driver:
-            self.driver = GraphDatabase.driver(
-                self.uri,
-                auth=(self.user, self.password)
-            )
-        return self.driver
-    
-    def close(self):
-        """Close Neo4j connection."""
-        if self.driver:
-            self.driver.close()
-            self.driver = None
-    
-    def execute_query(self, query: str, parameters: dict | None = None) -> list[dict]:
-        """Execute a Cypher query and return results."""
-        driver = self.connect()
-        with driver.session() as session:
-            result = session.run(query, parameters or {})
-            return [record.data() for record in result]
-
-
-# Global connection instance
-_neo4j_conn = Neo4jConnection()
+from app.database.neo4j_pool import get_neo4j_pool
+from app.exceptions import SpatialQueryError
 
 
 @tool
@@ -83,7 +47,8 @@ def find_nearby_protected_sites(
     """
     
     try:
-        results = _neo4j_conn.execute_query(
+        neo4j_pool = get_neo4j_pool()
+        results = neo4j_pool.execute_query(
             query,
             {"lat": latitude, "lon": longitude, "radius": radius_km}
         )
@@ -103,7 +68,10 @@ def find_nearby_protected_sites(
             "\n".join(sites_info)
         )
     except Exception as e:
-        return f"Error querying protected sites: {str(e)}"
+        raise SpatialQueryError(
+            message=f"Failed to query protected sites: {str(e)}",
+            query=query
+        )
 
 
 @tool
@@ -141,7 +109,8 @@ def find_nearby_water_bodies(
     """
     
     try:
-        results = _neo4j_conn.execute_query(
+        neo4j_pool = get_neo4j_pool()
+        results = neo4j_pool.execute_query(
             query,
             {"lat": latitude, "lon": longitude, "radius": radius_km}
         )
@@ -161,7 +130,10 @@ def find_nearby_water_bodies(
             "\n".join(water_info)
         )
     except Exception as e:
-        return f"Error querying water bodies: {str(e)}"
+        raise SpatialQueryError(
+            message=f"Failed to query water bodies: {str(e)}",
+            query=query
+        )
 
 
 @tool
@@ -206,7 +178,8 @@ def check_similar_incidents(
     """
     
     try:
-        results = _neo4j_conn.execute_query(
+        neo4j_pool = get_neo4j_pool()
+        results = neo4j_pool.execute_query(
             query,
             {
                 "incident_type": incident_type,
@@ -236,7 +209,10 @@ def check_similar_incidents(
             "\n\nThis may indicate a pattern or recurring issue in the area."
         )
     except Exception as e:
-        return f"Error querying historical incidents: {str(e)}"
+        raise SpatialQueryError(
+            message=f"Failed to query historical incidents: {str(e)}",
+            query=query
+        )
 
 
 @tool
@@ -260,7 +236,8 @@ def get_site_regulations(site_id: str) -> str:
     """
     
     try:
-        results = _neo4j_conn.execute_query(query, {"site_id": site_id})
+        neo4j_pool = get_neo4j_pool()
+        results = neo4j_pool.execute_query(query, {"site_id": site_id})
         
         if not results or not results[0].get("name"):
             return f"Protected site {site_id} not found in database"
@@ -280,9 +257,7 @@ def get_site_regulations(site_id: str) -> str:
         
         return response
     except Exception as e:
-        return f"Error querying site regulations: {str(e)}"
-
-
-def close_neo4j_connection():
-    """Close the global Neo4j connection. Call on application shutdown."""
-    _neo4j_conn.close()
+        raise SpatialQueryError(
+            message=f"Failed to query site regulations: {str(e)}",
+            query=query
+        )

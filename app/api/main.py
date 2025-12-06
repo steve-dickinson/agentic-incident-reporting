@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
@@ -16,6 +16,9 @@ from app.agents.hitl_incident_agent import hitl_incident_agent
 from app.api.dashboard import router as dashboard_router
 from app.models.logging import agent_logger
 from app.tools.classification import _determine_severity, PRIORITY_MAP
+from app.middleware import SecurityHeadersMiddleware, RateLimitMiddleware
+from app.database.neo4j_pool import get_neo4j_pool, close_neo4j_pool
+from app.exceptions import IncidentProcessingError
 
 logging.basicConfig(
     level=logging.INFO,
@@ -31,6 +34,17 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
+# Add security headers middleware
+app.add_middleware(SecurityHeadersMiddleware)
+
+# Add rate limiting middleware (100 requests/minute, 2000/hour)
+app.add_middleware(
+    RateLimitMiddleware,
+    requests_per_minute=100,
+    requests_per_hour=2000
+)
+
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -41,6 +55,38 @@ app.add_middleware(
 
 # Include routers
 app.include_router(dashboard_router)
+
+
+# Startup and shutdown events
+@app.on_event("startup")
+async def startup_event():
+    """Initialize connections on startup."""
+    try:
+        # Initialize Neo4j connection pool
+        neo4j_pool = get_neo4j_pool()
+        logger.info("Neo4j connection pool initialized")
+        logger.info("Application startup complete")
+    except Exception as e:
+        logger.error(f"Failed to initialize connections: {e}")
+        raise
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup connections on shutdown."""
+    close_neo4j_pool()
+    logger.info("Application shutdown complete")
+
+
+# Exception handlers
+@app.exception_handler(IncidentProcessingError)
+async def incident_error_handler(request: Request, exc: IncidentProcessingError):
+    """Handle all incident processing errors with structured response."""
+    logger.error(f"Incident processing error: {exc.message}", extra=exc.details)
+    return JSONResponse(
+        status_code=500,
+        content=exc.to_dict()
+    )
 
 
 class IncidentSubmission(BaseModel):

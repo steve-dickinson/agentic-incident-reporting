@@ -163,7 +163,7 @@ class HITLIncidentAgent:
         
         # Apply human modifications if provided
         if state.get("modified_classification"):
-            logger.info(f"Applying human modifications to classification")
+            logger.info("Applying human modifications to classification")
             state["classification"].update(state["modified_classification"])
             state["severity"] = state["modified_classification"].get(
                 "severity", state["severity"]

@@ -1,7 +1,13 @@
 """Incident classification tool for environmental incidents."""
 
+import logging
 from langchain_core.tools import tool
-from typing import Final
+from pydantic import BaseModel, Field, field_validator, ValidationError as PydanticValidationError
+from typing import Final, Literal
+
+from app.exceptions import ClassificationError
+
+logger = logging.getLogger(__name__)
 
 CRITICAL_KEYWORDS: Final = [
     "drinking water", "mass fish kill", "evacuation", "toxic",
@@ -118,6 +124,90 @@ def _generate_reasoning(incident_type: str, severity: str) -> str:
     return " ".join(reasoning_parts)
 
 
+class ClassificationOutput(BaseModel):
+    """Validated classification output schema."""
+    
+    category: str = Field(..., description="Incident category/type")
+    severity: Literal["critical", "high", "medium", "low"] = Field(
+        ..., description="Severity level of the incident"
+    )
+    priority: str = Field(..., description="Priority level with response time")
+    required_actions: list[str] = Field(
+        ..., min_length=3, max_length=20, description="List of required actions"
+    )
+    reasoning: str = Field(
+        ..., min_length=20, max_length=500, description="Classification reasoning"
+    )
+    
+    @field_validator('priority')
+    @classmethod
+    def validate_priority_format(cls, v, info):
+        """Ensure priority matches severity and has correct format."""
+        if 'severity' not in info.data:
+            return v
+        
+        severity = info.data['severity']
+        expected_prefix = {
+            "critical": "P1",
+            "high": "P2", 
+            "medium": "P3",
+            "low": "P4"
+        }
+        
+        prefix = expected_prefix.get(severity)
+        if not v.startswith(prefix):
+            logger.warning(
+                f"Priority '{v}' doesn't match severity '{severity}'. "
+                f"Expected to start with '{prefix}'"
+            )
+            # Auto-correct to match severity
+            return PRIORITY_MAP.get(severity, v)
+        
+        return v
+    
+    @field_validator('required_actions')
+    @classmethod
+    def validate_required_actions(cls, v):
+        """Ensure actions are meaningful and not duplicated."""
+        # Remove duplicates while preserving order
+        if len(v) != len(set(v)):
+            seen = set()
+            v = [x for x in v if not (x in seen or seen.add(x))]
+            logger.warning("Removed duplicate actions from classification")
+        
+        # Remove short or poorly formatted actions
+        valid_actions = []
+        for action in v:
+            action = action.strip()
+            if len(action) >= 5:  # Minimum meaningful length
+                valid_actions.append(action)
+            else:
+                logger.warning(f"Removed short action: '{action}'")
+        
+        if len(valid_actions) < 3:
+            raise ValueError(f"After validation, only {len(valid_actions)} valid actions remain (minimum 3 required)")
+        
+        return valid_actions
+    
+    @field_validator('reasoning')
+    @classmethod
+    def validate_reasoning(cls, v):
+        """Ensure reasoning is substantive."""
+        v = v.strip()
+        
+        if not v:
+            raise ValueError("Reasoning cannot be empty")
+        
+        # Check for placeholder text (be more specific to avoid false positives)
+        placeholders = ["TODO:", "TBD", "N/A", "None"]
+        v_lower = v.lower()
+        for placeholder in placeholders:
+            if v_lower.startswith(placeholder.lower()) or v_lower == placeholder.lower():
+                raise ValueError(f"Reasoning appears to be placeholder text: {v}")
+        
+        return v
+
+
 @tool
 def classify_incident(
     incident_type: str,
@@ -145,10 +235,39 @@ def classify_incident(
     actions = _determine_actions(incident_type, severity)
     reasoning = _generate_reasoning(incident_type, severity)
     
-    return {
+    # Create unvalidated output
+    output_data = {
         "category": incident_type,
         "severity": severity,
         "priority": priority,
         "required_actions": actions,
         "reasoning": reasoning
     }
+    
+    # Validate output before returning
+    try:
+        validated_output = ClassificationOutput(**output_data)
+        logger.info(
+            f"Classification validated: {incident_type} -> {severity} "
+            f"({len(validated_output.required_actions)} actions)"
+        )
+        return validated_output.model_dump()
+    except Exception as e:
+        logger.error(f"Classification validation failed: {e}")
+        logger.error(f"Invalid output: {output_data}")
+        
+        # Return fallback with minimal valid data
+        fallback = {
+            "category": incident_type,
+            "severity": "medium",
+            "priority": PRIORITY_MAP["medium"],
+            "required_actions": [
+                "Log incident in database",
+                "Assign incident ID",
+                "Notify appropriate team"
+            ],
+            "reasoning": f"Classification failed validation. Using medium severity default for {incident_type}."
+        }
+        logger.warning(f"Returning fallback classification: {fallback}")
+        return fallback
+

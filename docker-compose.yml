@@ -16,6 +16,7 @@ services:
       - ./app:/app/app
       - ./data:/app/data
       - ./config:/app/config
+      - ./tests:/app/tests
     depends_on:
       - neo4j
       - postgres
