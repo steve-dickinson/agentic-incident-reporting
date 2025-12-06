@@ -11,9 +11,9 @@ from typing import Any
 import hashlib
 
 from langchain_openai import OpenAIEmbeddings
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
-from langchain.schema import Document
+from langchain_core.documents import Document
 import psycopg2
 from psycopg2.extras import execute_values
 

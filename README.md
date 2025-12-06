@@ -163,8 +163,14 @@ pip install -r requirements.txt
 - [x] Integrated spatial context into agent workflow
 - [x] Tested spatial queries with real coordinates
 
+### ✅ Phase 5: pgvector Semantic Search (COMPLETED)
+- [x] Document embedding pipeline with OpenAI embeddings
+- [x] Loaded guidance documents into pgvector (14 chunks)
+- [x] Semantic search tool for querying regulations and procedures
+- [x] Integrated into agent workflow (classify → spatial → guidance → notify)
+- [x] Tested with water pollution and illegal dumping scenarios
+
 ### 📅 Upcoming Phases
-- **Phase 5**: pgvector Integration (semantic search over guidance documents)
 - **Phase 6**: Comprehensive Test Suite (unit, integration, end-to-end)
 - **Phase 7**: ✅ Documentation & GitHub Pages (COMPLETED)
 - **Phase 8**: Demo Walkthrough & Video Tutorial

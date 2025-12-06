@@ -71,6 +71,7 @@ class IncidentResponse(BaseModel):
     classification: dict[str, Any] | None = None
     actions: list[str] | None = None
     spatial_context: dict[str, Any] | None = None
+    guidance: str | None = None
     notifications: dict[str, Any] | None = None
     errors: list[str] | None = None
     timestamp: str
@@ -135,6 +136,7 @@ async def submit_incident(incident: IncidentSubmission):
             classification=result.get("classification"),
             actions=result.get("actions"),
             spatial_context=result.get("spatial_context"),
+            guidance=result.get("guidance"),
             notifications=result.get("notifications"),
             errors=result.get("errors", []),
             timestamp=datetime.utcnow().isoformat()

@@ -212,7 +212,49 @@ agentic-incident-reporting/
 - Vulnerability matching (incident type vs site vulnerabilities)
 - Real-time spatial context enrichment for every incident
 
-#### Phase 5: pgvector Integration
+#### Phase 5: pgvector Semantic Search ✅
+
+**Completed:**
+
+1. **Document Embedding Pipeline:**
+   - Updated LangChain imports for 0.3 compatibility (langchain_text_splitters, langchain_core.documents)
+   - DocumentEmbedder class with OpenAI text-embedding-3-small
+   - RecursiveCharacterTextSplitter (1000 char chunks, 200 overlap)
+   - Content hash deduplication to avoid storing duplicates
+   - Loaded 2 guidance documents into 14 chunks
+
+2. **Semantic Search Tool:**
+   - Created search_guidance_documents LangChain tool
+   - SemanticSearch class with cosine similarity (1 - distance)
+   - Configurable similarity threshold (default: 0.6)
+   - Returns top-k results with similarity scores
+   - Formatted output with document content and metadata
+
+3. **Database Integration:**
+   - pgvector extension enabled in PostgreSQL
+   - Documents table with 1536-dimension embeddings
+   - IVFFlat index for efficient vector similarity search
+   - JSONB metadata storage with GIN index
+
+4. **Agent Workflow Integration:**
+   - Added guidance step: classify → spatial → guidance → notify → finalize
+   - Automatic search based on incident type and severity
+   - Query construction from incident context
+   - Guidance included in API response
+
+5. **Testing & Validation:**
+   - Water pollution incident: Retrieved incident response procedures (0.63 similarity) ✓
+   - Illegal dumping incident: Found guidance with 130 chars retrieved ✓
+   - Semantic search working with natural language queries ✓
+   - Integration with spatial context (Peak District SSSI identified) ✓
+
+**Key Features:**
+- Natural language search over regulations and procedures
+- Automatic context-aware guidance retrieval
+- Similarity-based ranking of relevant documents
+- Integration with classification and spatial context
+
+#### Phase 6: Comprehensive Test Suite
 
 ### Files Created/Modified
 

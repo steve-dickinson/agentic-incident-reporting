@@ -95,12 +95,13 @@ Industrial emissions affecting residents:
 - [x] Neo4j graph database with 10 UK protected sites and 8 water bodies
 - [x] Spatial query tools (nearby sites within 5km, water bodies within 10km)
 - [x] Historical incident pattern detection (similar incidents within 25km)
+- [x] pgvector semantic search over 14 guidance document chunks
+- [x] Automated retrieval of relevant regulations and procedures
 - [x] GOV.UK Notify integration (email notifications)
 - [x] Comprehensive documentation and GitHub Pages
 
 ### In Progress 🚧
 
-- [ ] pgvector semantic search over guidance documents
 - [ ] Comprehensive automated test suite
 - [ ] CI/CD pipeline with GitHub Actions
 

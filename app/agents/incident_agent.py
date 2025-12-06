@@ -6,13 +6,14 @@ from langgraph.graph import StateGraph, END
 import logging
 
 from app.models.config import settings
-from app.tools.classification import classify_incident_tool
+from app.tools.classification import classify_incident
 from app.tools.notify import send_notification_tool
 from app.tools.spatial import (
     find_nearby_protected_sites,
     find_nearby_water_bodies,
     check_similar_incidents
 )
+from app.tools.semantic_search import search_guidance_documents
 
 logger = logging.getLogger(__name__)
 
@@ -27,18 +28,19 @@ class IncidentState(TypedDict):
     longitude: float | None
     reporter_email: str | None
     urgency: str
-    classification: dict[str, Any] | None
+    classification: dict[str, str | list[str]] | None
     severity: str | None
     priority: str | None
     actions: list[str] | None
-    spatial_context: dict[str, Any] | None
-    notifications_sent: dict[str, Any] | None
+    spatial_context: dict[str, str | list[dict[str, str]]] | None
+    guidance: str | None
+    notifications_sent: dict[str, str] | None
     step: str
     errors: list[str]
 
 
 class IncidentAgent:
-    """Processes incidents through classify -> spatial -> notify -> finalize workflow."""
+    """Processes incidents through classify -> spatial -> guidance -> notify -> finalize workflow."""
     
     def __init__(self):
         self.llm = ChatOpenAI(
@@ -48,11 +50,12 @@ class IncidentAgent:
         )
         
         self.tools = [
-            classify_incident_tool,
+            classify_incident,
             send_notification_tool,
             find_nearby_protected_sites,
             find_nearby_water_bodies,
-            check_similar_incidents
+            check_similar_incidents,
+            search_guidance_documents
         ]
         self.workflow = self._create_workflow()
     
@@ -61,12 +64,14 @@ class IncidentAgent:
         
         workflow.add_node("classify", self._classify_incident)
         workflow.add_node("spatial", self._check_spatial_context)
+        workflow.add_node("guidance", self._search_guidance)
         workflow.add_node("notify", self._send_notifications)
         workflow.add_node("finalize", self._finalize_response)
         
         workflow.set_entry_point("classify")
         workflow.add_edge("classify", "spatial")
-        workflow.add_edge("spatial", "notify")
+        workflow.add_edge("spatial", "guidance")
+        workflow.add_edge("guidance", "notify")
         workflow.add_edge("notify", "finalize")
         workflow.add_edge("finalize", END)
         
@@ -76,12 +81,12 @@ class IncidentAgent:
         try:
             logger.info(f"Classifying incident {state['incident_id']}")
             
-            result = classify_incident_tool._run(
-                incident_type=state["incident_type"],
-                description=state["description"],
-                location=state["location"],
-                urgency=state["urgency"]
-            )
+            result = classify_incident.invoke({
+                "incident_type": state["incident_type"],
+                "description": state["description"],
+                "location": state["location"],
+                "urgency": state["urgency"]
+            })
             
             state["classification"] = result
             state["severity"] = result["severity"]
@@ -151,17 +156,46 @@ class IncidentAgent:
         
         return state
     
+    def _search_guidance(self, state: IncidentState) -> IncidentState:
+        """Search for relevant guidance documents."""
+        try:
+            logger.info(f"Searching guidance for incident {state['incident_id']}")
+            
+            # Create search query based on incident details
+            query = (
+                f"{state['incident_type']} incident "
+                f"severity {state.get('severity', 'medium')} "
+                f"{state.get('description', '')[:100]}"
+            )
+            
+            guidance_result = search_guidance_documents.invoke({
+                "query": query,
+                "top_k": 2
+            })
+            
+            state["guidance"] = guidance_result
+            state["step"] = "guidance_retrieved"
+            
+            logger.info(f"Retrieved guidance for {state['incident_type']}")
+            
+        except Exception as e:
+            logger.error(f"Guidance search error: {e}")
+            state["errors"].append(f"Guidance search failed: {str(e)}")
+            state["guidance"] = None
+        
+        return state
+    
     def _send_notifications(self, state: IncidentState) -> IncidentState:
         try:
             logger.info(f"Sending notifications for {state['incident_id']}")
             
-            result = send_notification_tool._run(
-                incident_id=state["incident_id"],
-                incident_type=state["incident_type"],
-                severity=state["severity"] or "medium",
-                message_type="acknowledgment",
-                recipient_email=state.get("reporter_email")
-            )
+            result = send_notification_tool.invoke({
+                "incident_id": state["incident_id"],
+                "incident_type": state["incident_type"],
+                "severity": state["severity"] or "medium",
+                "message_type": "acknowledgment",
+                "recipient_email": state.get("reporter_email")
+            })
             
             state["notifications_sent"] = result
             state["step"] = "notified"
@@ -203,6 +237,7 @@ class IncidentAgent:
             "priority": None,
             "actions": None,
             "spatial_context": None,
+            "guidance": None,
             "notifications_sent": None,
             "step": "initialized",
             "errors": []
@@ -219,6 +254,7 @@ class IncidentAgent:
                 "actions": final_state["actions"],
                 "classification": final_state["classification"],
                 "spatial_context": final_state.get("spatial_context"),
+                "guidance": final_state.get("guidance"),
                 "notifications": final_state["notifications_sent"],
                 "errors": final_state["errors"]
             }
