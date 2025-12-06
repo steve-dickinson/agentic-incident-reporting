@@ -1,0 +1,13 @@
+{
+  "incident_type": "wildlife_harm",
+  "location": "Norfolk Broads, East Timothy",
+  "latitude": 52.631007,
+  "longitude": 1.299431,
+  "description": "Wildlife Harm incident at Norfolk Broads",
+  "urgency": "medium",
+  "additional_info": {
+    "reported_at": "2025-12-06T15:56:09.046673",
+    "weather": "windy",
+    "visibility": "good"
+  }
+}

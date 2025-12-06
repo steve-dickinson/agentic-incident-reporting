@@ -1,0 +1,15 @@
+{
+  "incident_type": "agricultural_runoff",
+  "location": "Yorkshire Dales, New Joeside",
+  "latitude": 54.205847,
+  "longitude": -2.087309,
+  "description": "Agricultural Runoff incident at Yorkshire Dales",
+  "urgency": "low",
+  "additional_info": {
+    "reported_at": "2025-12-06T15:56:09.046730",
+    "weather": "rainy",
+    "visibility": "moderate"
+  },
+  "reporter_email": "lquinn@example.com",
+  "reporter_phone": "(0808) 157 0026"
+}

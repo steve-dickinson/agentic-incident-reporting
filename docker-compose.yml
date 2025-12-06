@@ -1,0 +1,79 @@
+services:
+  # FastAPI Agent Service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: defra-agent-api
+    ports:
+      - "8000:8000"
+    environment:
+      - NEO4J_URI=bolt://neo4j:7687
+      - POSTGRES_HOST=postgres
+    env_file:
+      - .env
+    volumes:
+      - ./app:/app/app
+      - ./data:/app/data
+      - ./config:/app/config
+    depends_on:
+      - neo4j
+      - postgres
+    networks:
+      - defra-network
+    restart: unless-stopped
+
+  # Neo4j Knowledge Graph
+  neo4j:
+    image: neo4j:5.16.0
+    container_name: defra-neo4j
+    ports:
+      - "7475:7474"  # HTTP (changed to avoid conflict)
+      - "7688:7687"  # Bolt (changed to avoid conflict)
+    environment:
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD:-changeme}
+      - NEO4J_PLUGINS=["apoc", "graph-data-science"]
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*,gds.*
+      - NEO4J_dbms_memory_heap_initial__size=512m
+      - NEO4J_dbms_memory_heap_max__size=2G
+    volumes:
+      - neo4j-data:/data
+      - neo4j-logs:/logs
+      - neo4j-import:/var/lib/neo4j/import
+      - neo4j-plugins:/plugins
+    networks:
+      - defra-network
+    restart: unless-stopped
+
+  # PostgreSQL with pgvector
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: defra-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-incident_reporting}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./config/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - defra-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  neo4j-data:
+  neo4j-logs:
+  neo4j-import:
+  neo4j-plugins:
+  postgres-data:
+
+networks:
+  defra-network:
+    driver: bridge

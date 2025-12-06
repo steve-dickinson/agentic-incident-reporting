@@ -1,0 +1,13 @@
+{
+  "incident_type": "chemical_spill",
+  "location": "New Forest, North Charliebury",
+  "latitude": 50.85699,
+  "longitude": -1.614231,
+  "description": "Chemical Spill incident at New Forest",
+  "urgency": "critical",
+  "additional_info": {
+    "reported_at": "2025-12-06T15:56:09.046712",
+    "weather": "sunny",
+    "visibility": "moderate"
+  }
+}

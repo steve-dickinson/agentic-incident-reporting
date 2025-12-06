@@ -1,0 +1,13 @@
+{
+  "incident_type": "air_pollution",
+  "location": "River Thames, North Henrybury",
+  "latitude": 51.502298,
+  "longitude": -0.135009,
+  "description": "Dust pollution affecting River Thames",
+  "urgency": "low",
+  "additional_info": {
+    "reported_at": "2025-12-06T15:56:09.046631",
+    "weather": "sunny",
+    "visibility": "poor"
+  }
+}

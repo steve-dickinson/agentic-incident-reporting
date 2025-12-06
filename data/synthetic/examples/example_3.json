@@ -1,0 +1,13 @@
+{
+  "incident_type": "water_pollution",
+  "location": "Peak District, New Maryton",
+  "latitude": 53.366252,
+  "longitude": -1.834143,
+  "description": "Sewage overflow into Peak District",
+  "urgency": "medium",
+  "additional_info": {
+    "reported_at": "2025-12-06T15:56:09.046694",
+    "weather": "cloudy",
+    "visibility": "good"
+  }
+}
