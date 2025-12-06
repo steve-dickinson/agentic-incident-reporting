@@ -19,6 +19,8 @@ This system demonstrates how AI agents, knowledge graphs, and semantic search ca
 
 - **[Getting Started Guide](guides/getting_started.md)** - Set up and run the system
 - **[System Architecture](architecture/system_design.md)** - Technical deep dive
+- **[Dashboard Guide](dashboard-guide.md)** - Monitor incidents in real-time
+- **[Demo Walkthrough](examples/demo_walkthrough.md)** - Example scenarios and testing
 - **[API Documentation](http://localhost:8000/docs)** - Interactive API reference
 - **[GitHub Repository](https://github.com/steve-dickinson/agentic-incident-reporting)** - Source code
 
@@ -43,6 +45,7 @@ flowchart TD
 | **Graph DB** | Neo4j 5.16 | Spatial & relational data |
 | **Vector Store** | PostgreSQL + pgvector | Semantic search |
 | **Notifications** | GOV.UK Notify | Email/SMS alerts |
+| **Dashboard** | Streamlit | Real-time monitoring |
 | **LLM** | OpenAI GPT-4 Turbo | Classification & reasoning |
 
 ## Use Cases
@@ -76,42 +79,47 @@ Industrial emissions affecting residents:
 3. **Threshold Assessment**: Compares to regulatory limits
 4. **Action**: Schedules inspection and issues warning letter
 
-## Project Status
+## Features
 
-**Current Phase**: Phase 3 Complete - Agent MVP Operational  
-**Next Phase**: Neo4j Graph Integration (Phase 4)  
-**Target**: Q1 2026 for full demonstration
+### 🤖 AI-Powered Intelligence
 
-### Completed ✅
+- **Smart Classification**: Automatic incident categorization with P1-P4 priority levels
+- **Context-Aware Actions**: Generates 8-11 specific actions tailored to each incident type
+- **Pattern Recognition**: Identifies similar historical incidents within 25km radius
+- **Reasoning Transparency**: Full audit trail of all AI decisions
 
-- [x] Docker infrastructure setup with Neo4j, PostgreSQL, FastAPI
-- [x] Python 3.12 environment with modern type hints
-- [x] FastAPI application with health and incident submission endpoints
-- [x] Synthetic data generator (50+ test incidents)
-- [x] Guidance documents and legislation reference
-- [x] LangChain agent with LangGraph workflow orchestration
-- [x] Intelligent incident classification with severity detection (P1-P4 priorities)
-- [x] Context-aware action recommendations
-- [x] Neo4j graph database with 10 UK protected sites and 8 water bodies
-- [x] Spatial query tools (nearby sites within 5km, water bodies within 10km)
-- [x] Historical incident pattern detection (similar incidents within 25km)
-- [x] pgvector semantic search over 14 guidance document chunks
-- [x] Automated retrieval of relevant regulations and procedures
-- [x] GOV.UK Notify integration (email notifications)
-- [x] Comprehensive documentation and GitHub Pages
-- [x] Comprehensive test suite (72 tests, 57% coverage)
+### 🗺️ Spatial Analysis
 
-### In Progress 🚧
+- **Protected Sites**: Queries 10 UK SSSIs, SACs, NNRs, and Ramsar sites
+- **Water Bodies**: Identifies nearby rivers, lakes, estuaries, and coastal waters
+- **Proximity Detection**: Searches within configurable radius (5km for sites, 10km for water)
+- **Neo4j Integration**: Graph-based spatial relationships and queries
 
-- [ ] CI/CD pipeline with GitHub Actions
+### 📚 Knowledge Base
 
-### Planned 📅
+- **Semantic Search**: pgvector-powered search over 14 guidance document chunks
+- **Regulatory Guidance**: Automated retrieval of relevant legislation and procedures
+- **Incident Response**: Best practices for water pollution, air quality, waste dumping
+- **OpenAI Embeddings**: High-quality text-embedding-3-small for similarity search
 
-- [ ] Advanced spatial queries
-- [ ] Historical pattern analysis
-- [ ] Multi-modal input (images, voice)
-- [ ] Real-time dashboard
-- [ ] Production deployment guide
+### 📊 Monitoring & Observability
+
+**Real-time Streamlit Dashboard** at http://localhost:8502:
+
+- **Metrics**: Total incidents, P1/P2/P3/P4 counts, completion rates, avg processing time
+- **Charts**: Hourly trends, processing time graphs, priority distribution
+- **Incident Table**: Searchable/filterable by priority, type, status, location
+- **Execution Logs**: Step-by-step agent execution with timing and error details
+- **Live Updates**: Configurable auto-refresh for real-time monitoring
+
+**[View Dashboard Guide →](dashboard-guide.md)**
+
+### 🧪 Testing & Quality
+
+- **72 Tests**: Unit and integration tests across all components
+- **57% Coverage**: Core logic well-tested with mocked external services
+- **Demo Script**: `./demo_test.sh` with 5 realistic scenarios
+- **Type Safety**: Modern Python 3.12+ type hints throughout
 
 ## Getting Started
 
@@ -136,7 +144,10 @@ cp .env.example .env
 # Start services
 docker-compose up -d
 
-# Verify
+# Access dashboard
+open http://localhost:8501
+
+# Verify API
 curl http://localhost:8000/health
 ```
 

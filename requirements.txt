@@ -16,6 +16,7 @@ openai>=1.10.0
 # Database Drivers
 neo4j==5.16.0
 psycopg2-binary==2.9.9
+asyncpg>=0.29.0
 pgvector==0.2.4
 
 # GOV.UK Notify

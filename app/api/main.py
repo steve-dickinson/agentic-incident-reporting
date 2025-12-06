@@ -1,14 +1,18 @@
 """FastAPI application for environmental incident reporting."""
 
+import logging
+import time
+from datetime import datetime
+from typing import Any
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
-from typing import Any
-import logging
-from datetime import datetime
 
 from app.agents.incident_agent import incident_agent
+from app.api.dashboard import router as dashboard_router
+from app.models.logging import agent_logger
 
 logging.basicConfig(
     level=logging.INFO,
@@ -31,6 +35,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include routers
+app.include_router(dashboard_router)
 
 
 class IncidentSubmission(BaseModel):
@@ -107,6 +114,25 @@ async def submit_incident(incident: IncidentSubmission):
         logger.info(f"Received incident submission: {incident.incident_type}")
         
         incident_id = f"INC-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}"
+        start_time = time.time()
+        
+        # Log incident creation
+        form_data = incident.model_dump()
+        await agent_logger.log_incident_creation(
+            incident_id=incident_id,
+            form_data=form_data,
+            classification=None,
+            severity=None
+        )
+        
+        # Log start of processing
+        await agent_logger.log_step(
+            incident_id=incident_id,
+            step_name="initialize",
+            step_order=0,
+            status="started",
+            input_data=form_data
+        )
         
         result = incident_agent.process_incident(
             incident_id=incident_id,
@@ -119,12 +145,41 @@ async def submit_incident(incident: IncidentSubmission):
             urgency=incident.urgency or "medium"
         )
         
+        # Calculate duration
+        duration_ms = int((time.time() - start_time) * 1000)
+        
+        # Log completion
         if result["success"]:
+            await agent_logger.log_step(
+                incident_id=incident_id,
+                step_name="complete",
+                step_order=99,
+                status="completed",
+                output_data=result,
+                duration_ms=duration_ms
+            )
+            
+            # Update incident with final classification
+            await agent_logger.log_incident_creation(
+                incident_id=incident_id,
+                form_data=form_data,
+                classification=result.get("classification"),
+                severity=result.get("severity")
+            )
+            
             message = (
                 f"Incident {incident_id} received and classified as "
                 f"{result['severity']} severity. {result['priority']}"
             )
         else:
+            await agent_logger.log_step(
+                incident_id=incident_id,
+                step_name="complete",
+                step_order=99,
+                status="failed",
+                error_message=result.get("error"),
+                duration_ms=duration_ms
+            )
             message = f"Incident {incident_id} received but processing encountered errors"
         
         return IncidentResponse(

@@ -77,6 +77,10 @@ nav:
     - Quick Start: guides/getting_started.md
   - Architecture:
     - System Design: architecture/system_design.md
+  - User Guides:
+    - Dashboard Guide: dashboard-guide.md
+  - Examples:
+    - Demo Walkthrough: examples/demo_walkthrough.md
   - About:
     - Progress Log: progress.md
 

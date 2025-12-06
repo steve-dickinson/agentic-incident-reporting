@@ -1,9 +1,10 @@
 """LangGraph agent for processing environmental incident reports."""
 
+import logging
 from typing import Any, TypedDict
+
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, END
-import logging
 
 from app.models.config import settings
 from app.tools.classification import classify_incident

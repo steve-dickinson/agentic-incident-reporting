@@ -402,13 +402,93 @@ agentic-incident-reporting/
 - **Phase 2**: ✅ Complete (Synthetic data and guidance)
 - **Phase 3**: ✅ Complete (LangChain agent MVP)
 - **Phase 4**: ✅ Complete (Neo4j spatial integration)
-- **Phase 5**: ✅ Complete (pgvector semantic search)
+- **Phase 5**: ✅ Complete (pgvector semantic search + LangChain 1.0 upgrade)
 - **Phase 6**: ✅ Complete (Comprehensive test suite - 72 tests, 57% coverage)
 - **Phase 7**: ✅ Complete (Documentation and GitHub Pages)
-- **Phase 8**: 📅 Ready to start (Demo walkthrough)
+- **Phase 8**: ✅ Complete (Demo walkthrough and test scripts)
+- **Phase 9**: ✅ Complete (Structured logging and Streamlit dashboard)
 
-**Next Session Focus**: 
-1. Create demo walkthrough documentation
-2. Record video demonstration
-3. Add CI/CD pipeline configuration
-4. Prepare final presentation materials
+### Phase 8: Demo Walkthrough (COMPLETED)
+
+**Demo Documentation:**
+- Created comprehensive demo walkthrough guide (`docs/examples/demo_walkthrough.md`)
+- 5 realistic scenarios covering all system capabilities:
+  1. Critical water pollution with drinking water keywords (P1 priority)
+  2. Oil spill near protected SSSI site (spatial awareness)
+  3. Illegal dumping in national park (waste-specific actions)
+  4. Low-priority noise complaint (routine workflow)
+  5. Air pollution without coordinates (graceful handling)
+- Each scenario includes curl commands and expected JSON responses
+- Added monitoring and troubleshooting sections
+
+**Executable Test Script:**
+- Created `demo_test.sh` with colored output and jq integration
+- Automated testing of all 5 scenarios
+- Health checks and validation
+- Summary reporting with key features demonstrated
+- Made executable with proper error handling
+
+**System Features Demonstrated:**
+- ✅ Intelligent severity classification (P1-P4 priorities)
+- ✅ Dynamic action generation based on incident type
+- ✅ Spatial awareness (Neo4j queries for protected sites)
+- ✅ Protected site identification within 5km radius
+- ✅ Water body proximity detection
+- ✅ Priority-based response times (1 hour to 5 days)
+- ✅ Email notifications via GOV.UK Notify
+- ✅ Semantic guidance search using pgvector
+- ✅ Graceful handling of missing data
+
+**Project Status**: 
+All 9 phases complete. System is production-ready with comprehensive testing, documentation, demonstration materials, and real-time monitoring dashboard.
+
+### Phase 9: Structured Logging & Dashboard (COMPLETED)
+
+**Structured Execution Logging:**
+- Created `AgentLogger` class with PostgreSQL backing (`app/models/logging.py`)
+- Step-level tracking for all agent workflow stages
+- Captures execution status, input/output data, duration, and errors
+- Async implementation using asyncpg connection pool (non-blocking)
+- Integrated logging into all workflow steps (classify, spatial, guidance, notify)
+
+**Enhanced Database Schema:**
+- New `execution_logs` table for step-by-step tracking
+- New `incident_metrics` table for daily aggregated statistics
+- Database views: `dashboard_summary` (7-day stats), `recent_incidents_detail`
+- Optimized indexes for dashboard queries
+- Auto-initialization via Docker entrypoint
+
+**Dashboard API Endpoints:**
+- Created `/api/v1/dashboard/*` endpoints (`app/api/dashboard.py`)
+- `GET /summary` - 7-day incident summary with priorities and completion rates
+- `GET /incidents` - Recent incidents with execution step counts
+- `GET /incidents/{id}/logs` - Detailed step-by-step execution logs
+- `GET /metrics` - Hourly metrics for time-series charts
+
+**Streamlit Dashboard:**
+- Built interactive dashboard (`dashboard/app.py`) on port 8501
+- Real-time metrics cards: Total incidents, P1/P2 counts, completion rate, avg processing time
+- Interactive charts: Incidents over time, processing trends, priority distribution
+- Recent incidents table with filtering (priority, type, status)
+- Execution log viewer with step-by-step details and timing
+- Auto-refresh capability (5-60 second intervals)
+- Docker container with Streamlit, pandas, plotly dependencies
+
+**Docker Integration:**
+- Added dashboard service to docker-compose.yml
+- Multi-stage database initialization (init-db.sql + logging-schema.sql)
+- Dashboard accessible at http://localhost:8501
+- Automatic service dependencies and networking
+
+**Key Benefits:**
+- ✅ Full observability into agent execution
+- ✅ Real-time monitoring and debugging
+- ✅ Performance tracking and bottleneck identification
+- ✅ Operational insights (priority distribution, completion rates)
+- ✅ Step-by-step execution logs for troubleshooting
+
+**Documentation:**
+- Created comprehensive guide: `docs/logging-dashboard.md`
+- Updated README with dashboard instructions
+- Added dashboard screenshots and usage examples
+

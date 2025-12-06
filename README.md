@@ -90,6 +90,7 @@ docker-compose up -d
 
 This will start:
 - **API service** on http://localhost:8000
+- **Dashboard** on http://localhost:8502
 - **Neo4j browser** on http://localhost:7475
 - **PostgreSQL** with pgvector on port 5433
 
@@ -101,6 +102,9 @@ curl http://localhost:8000/health
 
 # View API documentation
 open http://localhost:8000/docs
+
+# Access Streamlit dashboard
+open http://localhost:8502
 ```
 
 ## 💻 Local Development Setup
@@ -129,59 +133,29 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## 📊 Project Status
+## ✨ Key Features
 
-### ✅ Phase 1: Setup & Scaffolding (COMPLETED)
-- [x] Docker Compose configuration (Neo4j, PostgreSQL, API)
-- [x] Environment templates and configuration
-- [x] FastAPI application structure with health endpoints
-- [x] Database initialization scripts (pgvector enabled)
-- [x] Python 3.12+ environment with uv
-- [x] Modern type hints (PEP 604 syntax)
+- **🤖 Intelligent Classification** - AI-powered incident categorization with P1-P4 priority assignment
+- **🗺️ Spatial Awareness** - Integration with Neo4j to identify nearby protected sites and water bodies
+- **📚 Semantic Search** - pgvector-powered search over guidance documents and regulations
+- **🔔 Automated Notifications** - GOV.UK Notify integration for email/SMS alerts
+- **📊 Real-time Dashboard** - Streamlit dashboard with metrics, charts, and execution logs
+- **🔍 Full Auditability** - Comprehensive logging of all agent decisions and actions
+- **🧪 Well-Tested** - 72 tests with 57% coverage across unit and integration tests
+- **📖 Documented** - Complete API docs, guides, and example scenarios
 
-### ✅ Phase 2: Synthetic Data Generation (COMPLETED)
-- [x] Incident sample generator with UK locations
-- [x] 50+ test incidents across all incident types
-- [x] Guidance documents (incident response, legislation)
-- [x] Document embedding loader with pgvector
-- [x] Semantic search implementation
+## 📊 Dashboard
 
-### ✅ Phase 3: LangChain Agent MVP (COMPLETED)
-- [x] LangGraph workflow orchestration (classify → spatial → notify → finalize)
-- [x] Intelligent incident classification with severity detection
-- [x] Priority assignment (P1-P4) based on incident type and keywords
-- [x] Context-aware action recommendations (8-11 actions per incident)
-- [x] Spatial queries for nearby protected sites and water bodies
-- [x] GOV.UK Notify integration (email notifications)
-- [x] Tested with multiple incident scenarios (critical, high, medium, low)
+Access the Streamlit dashboard at http://localhost:8502 to monitor:
 
-### ✅ Phase 4: Neo4j Graph Integration (COMPLETED)
-- [x] Graph schema for protected sites (SSSI, SAC, NNR, Ramsar)
-- [x] Water bodies (rivers, lakes, estuaries, coastal waters)
-- [x] Spatial query tools (nearby sites, water bodies, historical incidents)
-- [x] Loaded 10 UK protected sites and 8 major water bodies
-- [x] Integrated spatial context into agent workflow
-- [x] Tested spatial queries with real coordinates
+- **Real-time metrics**: Total incidents, priorities (P1-P4), completion rates
+- **Processing times**: Average time per incident and hourly trends
+- **Priority distribution**: Visual breakdown of incident priorities
+- **Recent incidents**: Searchable table with filtering
+- **Execution logs**: Step-by-step agent execution details with timing
+- **Charts**: Hourly incident trends, processing time graphs, status overview
 
-### ✅ Phase 5: pgvector Semantic Search (COMPLETED)
-- [x] Document embedding pipeline with OpenAI embeddings
-- [x] Loaded guidance documents into pgvector (14 chunks)
-- [x] Semantic search tool for querying regulations and procedures
-- [x] Integrated into agent workflow (classify → spatial → guidance → notify)
-- [x] Tested with water pollution and illegal dumping scenarios
-
-### ✅ Phase 6: Comprehensive Test Suite (COMPLETED)
-- [x] Pytest configuration with coverage reporting
-- [x] Unit tests for classification tool (34 tests, 99% coverage)
-- [x] Unit tests for notification tool (16 tests, 90% coverage)
-- [x] Integration tests for agent workflow (10 tests)
-- [x] Integration tests for API endpoints (12 tests)
-- [x] 72 tests passing with 57% overall code coverage
-- [x] Mocked external services (OpenAI, Neo4j, PostgreSQL, GOV.UK Notify)
-
-### 📅 Upcoming Phases
-- **Phase 7**: ✅ Documentation & GitHub Pages (COMPLETED)
-- **Phase 8**: Demo Walkthrough & Video Tutorial
+The dashboard provides full visibility into agent execution for debugging and monitoring.
 
 ## 🧪 Testing
 
@@ -218,9 +192,10 @@ python -m app.tools.synthetic_data
 
 - **[Getting Started Guide](docs/guides/getting_started.md)** - Complete setup walkthrough
 - **[System Architecture](docs/architecture/system_design.md)** - Technical deep dive
+- **[Dashboard Guide](docs/dashboard-guide.md)** - Real-time monitoring and analytics
+- **[Demo Walkthrough](docs/examples/demo_walkthrough.md)** - Example scenarios and testing
 - **[API Reference](http://localhost:8000/docs)** - Interactive Swagger UI docs
-- **[Progress Log](docs/progress.md)** - Development status and decisions
-- **[GitHub Pages](https://steve-dickinson.github.io/agentic-incident-reporting/)** - Full documentation site (coming soon)
+- **[GitHub Pages](https://steve-dickinson.github.io/agentic-incident-reporting/)** - Full documentation site
 
 ### Build Documentation Locally
 
@@ -264,6 +239,30 @@ mypy app/ --ignore-missing-imports
 # Run all quality checks
 black app/ tests/ && flake8 app/ && mypy app/ && pytest
 ```
+
+## 🎬 Demo Walkthrough
+
+Run the complete demo to see all features in action:
+
+```bash
+# Make sure services are running
+docker compose up -d
+
+# Wait for services to be ready
+sleep 10
+
+# Run the demo script
+./demo_test.sh
+```
+
+The demo script tests 5 scenarios:
+1. **Critical water pollution** - P1 priority, drinking water keywords
+2. **Oil spill near SSSI** - Spatial awareness demonstration
+3. **Illegal dumping** - Waste-specific action generation
+4. **Low-priority noise** - Routine response workflow
+5. **Air pollution without coordinates** - Graceful handling
+
+See [`docs/examples/demo_walkthrough.md`](docs/examples/demo_walkthrough.md) for detailed walkthrough with expected responses.
 
 ## 📖 API Usage Example
 

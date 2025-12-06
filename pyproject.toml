@@ -22,6 +22,7 @@ dependencies = [
     "openai>=1.10.0",
     "neo4j>=5.16.0",
     "psycopg2-binary>=2.9.9",
+    "asyncpg>=0.29.0",
     "pgvector>=0.2.4",
     "notifications-python-client>=9.0.0",
     "sentence-transformers>=2.3.1",
