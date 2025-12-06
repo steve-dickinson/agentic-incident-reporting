@@ -10,7 +10,28 @@ docker-compose up -d dashboard
 open http://localhost:8502
 ```
 
-## Dashboard Sections
+## Dashboard Tabs
+
+The dashboard is organized into three tabs:
+
+### Tab 1: 📊 Overview
+- Summary metrics and charts
+- System performance monitoring
+- Priority distribution
+
+### Tab 2: ⏳ Approval Queue ⭐ NEW
+- Human-in-the-Loop workflow management
+- Pending high-priority incidents (P1/P2)
+- Approve/Reject controls
+
+### Tab 3: 📋 All Incidents
+- Complete incident history
+- Searchable and filterable table
+- Detailed execution logs
+
+---
+
+## Tab 1: Overview
 
 ### 1. Summary Metrics (Top Row)
 
@@ -41,6 +62,59 @@ open http://localhost:8502
 **Status Overview**
 - Bar chart: Completed, Failed, Processing
 - Shows system health and error rates
+
+---
+
+## Tab 2: Approval Queue ⭐
+
+**Human-in-the-Loop Workflow Management**
+
+This tab demonstrates LangGraph's checkpoint-based HITL pattern. High-priority incidents (P1 Critical, P2 High) are automatically paused for human approval before spatial analysis.
+
+### What You'll See
+
+**Pending Approvals**: Incidents awaiting human decision
+- **Incident ID**: Unique identifier
+- **Severity Badge**: 🔴 Critical, 🟠 High, 🟡 Medium, 🟢 Low
+- **Time Waiting**: Minutes since workflow paused
+- **Incident Details**:
+  - Type, Location, Description
+  - Reporter email, Urgency level
+  - AI Classification (JSON)
+
+### Actions
+
+**✅ Approve & Process**
+1. Enter your name (e.g., "Emergency Manager Sarah Johnson")
+2. Click "Approve & Process"
+3. LangGraph workflow resumes from checkpoint
+4. Spatial analysis and notifications proceed
+
+**❌ Reject**
+1. Enter your name
+2. Provide rejection reason
+3. Click "Reject"
+4. Workflow terminates without further processing
+
+### How It Works
+
+```python
+# When incident is submitted
+if priority in ["P1", "P2"]:
+    # Workflow pauses at interrupt point
+    workflow.compile(interrupt_before=["spatial"])
+    # State saved to MemorySaver checkpointer
+    
+# When human approves
+workflow.update_state(config, {"human_approved": True})
+workflow.invoke(None, config)  # Resume from checkpoint
+```
+
+**Learn more**: [LangGraph HITL Pattern Guide](guides/langgraph_hitl_pattern.md)
+
+---
+
+## Tab 3: All Incidents
 
 ### 3. Recent Incidents Table
 
@@ -88,6 +162,14 @@ Select any incident from the dropdown to view:
 
 ## Common Use Cases
 
+### Managing Human-in-the-Loop Approvals
+
+1. Navigate to "Approval Queue" tab
+2. Review pending P1/P2 incidents
+3. Check classification and incident details
+4. Approve to resume workflow or reject to terminate
+5. View results in "All Incidents" tab
+
 ### Monitoring Active Incidents
 
 1. Enable auto-refresh (10s interval)
@@ -125,6 +207,19 @@ curl http://localhost:8000/api/v1/dashboard/summary
 
 # Recent incidents (limit 50)
 curl http://localhost:8000/api/v1/dashboard/incidents?limit=50
+
+# Pending approvals (HITL)
+curl http://localhost:8000/api/v1/incidents/pending-approval
+
+# Approve incident
+curl -X POST http://localhost:8000/api/v1/incidents/INC-XXX/approve \
+  -H "Content-Type: application/json" \
+  -d '{"approved_by": "Manager Name"}'
+
+# Reject incident
+curl -X POST http://localhost:8000/api/v1/incidents/INC-XXX/reject \
+  -H "Content-Type: application/json" \
+  -d '{"approved_by": "Manager Name", "reason": "Duplicate report"}'
 
 # Specific incident logs
 curl http://localhost:8000/api/v1/dashboard/incidents/INC-20231206-001/logs

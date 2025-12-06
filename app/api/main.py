@@ -1,5 +1,6 @@
 """FastAPI application for environmental incident reporting."""
 
+import json
 import logging
 import time
 from datetime import datetime
@@ -11,8 +12,10 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from app.agents.incident_agent import incident_agent
+from app.agents.hitl_incident_agent import hitl_incident_agent
 from app.api.dashboard import router as dashboard_router
 from app.models.logging import agent_logger
+from app.tools.classification import _determine_severity, PRIORITY_MAP
 
 logging.basicConfig(
     level=logging.INFO,
@@ -84,6 +87,29 @@ class IncidentResponse(BaseModel):
     timestamp: str
 
 
+def quick_classify_priority(incident: IncidentSubmission) -> tuple[str, str]:
+    """Quickly determine severity and priority without full agent processing.
+    
+    Returns:
+        tuple[str, str]: (severity, priority)
+    """
+    severity = _determine_severity(
+        incident_type=incident.incident_type,
+        description=incident.description,
+        urgency=incident.urgency or "medium"
+    )
+    priority = PRIORITY_MAP.get(severity, "P3 - Standard Response (within 24 hours)")
+    return severity, priority
+
+
+def requires_approval(priority: str) -> bool:
+    """Determine if incident requires human approval before processing.
+    
+    P1/P2 incidents require approval, P3/P4 are auto-approved.
+    """
+    return priority.startswith("P1") or priority.startswith("P2")
+
+
 @app.get("/")
 async def root():
     return {
@@ -109,20 +135,26 @@ async def health_check():
 
 @app.post("/api/v1/incidents/submit", response_model=IncidentResponse)
 async def submit_incident(incident: IncidentSubmission):
-    """Submit incident for AI classification and notification."""
+    """Submit incident using LangGraph HITL agent with interrupt-based approval.
+    
+    The agent begins processing immediately, classifies the incident, and if it's
+    high-priority (P1/P2), the workflow pauses (via LangGraph interrupt) awaiting
+    human review. Low-priority incidents auto-approve and complete processing.
+    """
     try:
         logger.info(f"Received incident submission: {incident.incident_type}")
         
         incident_id = f"INC-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}"
         start_time = time.time()
+        form_data = incident.model_dump()
         
         # Log incident creation
-        form_data = incident.model_dump()
         await agent_logger.log_incident_creation(
             incident_id=incident_id,
             form_data=form_data,
             classification=None,
-            severity=None
+            severity=None,
+            approval_status="processing"
         )
         
         # Log start of processing
@@ -134,7 +166,8 @@ async def submit_incident(incident: IncidentSubmission):
             input_data=form_data
         )
         
-        result = incident_agent.process_incident(
+        # Process through HITL agent (may pause at interrupt point)
+        result = hitl_incident_agent.process_incident(
             incident_id=incident_id,
             incident_type=incident.incident_type,
             description=incident.description,
@@ -145,42 +178,79 @@ async def submit_incident(incident: IncidentSubmission):
             urgency=incident.urgency or "medium"
         )
         
-        # Calculate duration
         duration_ms = int((time.time() - start_time) * 1000)
         
-        # Log completion
-        if result["success"]:
+        # Check if workflow is awaiting human input
+        if result.get("awaiting_human"):
+            logger.info(
+                f"Incident {incident_id} paused at interrupt, awaiting human review "
+                f"(severity={result['severity']}, priority={result['priority']})"
+            )
+            
+            # Update incident status to pending
             await agent_logger.log_step(
                 incident_id=incident_id,
-                step_name="complete",
-                step_order=99,
-                status="completed",
+                step_name="human_review_required",
+                step_order=2,
+                status="interrupted",
                 output_data=result,
                 duration_ms=duration_ms
             )
             
-            # Update incident with final classification
-            await agent_logger.log_incident_creation(
-                incident_id=incident_id,
-                form_data=form_data,
-                classification=result.get("classification"),
-                severity=result.get("severity")
-            )
+            # Update approval status
+            async with agent_logger.pool.acquire() as conn:
+                await conn.execute("""
+                    UPDATE incidents
+                    SET approval_status = 'pending',
+                        classification = $1::jsonb,
+                        severity = $2
+                    WHERE incident_id = $3
+                """, json.dumps(result["classification"]), result["severity"], incident_id)
             
-            message = (
-                f"Incident {incident_id} received and classified as "
-                f"{result['severity']} severity. {result['priority']}"
-            )
-        else:
-            await agent_logger.log_step(
+            return IncidentResponse(
+                success=True,
                 incident_id=incident_id,
-                step_name="complete",
-                step_order=99,
-                status="failed",
-                error_message=result.get("error"),
-                duration_ms=duration_ms
+                message=(
+                    f"Incident {incident_id} classified and paused for human review. "
+                    f"LangGraph workflow interrupted at decision point. "
+                    f"Severity: {result['severity']}, Priority: {result['priority']}. "
+                    f"Use the Approval Queue to review and continue processing."
+                ),
+                severity=result.get("severity"),
+                priority=result.get("priority"),
+                classification=result.get("classification"),
+                actions=["Workflow paused - awaiting human review at LangGraph interrupt"],
+                errors=[],
+                timestamp=datetime.utcnow().isoformat()
             )
-            message = f"Incident {incident_id} received but processing encountered errors"
+        
+        # Low priority - auto-approved and fully processed
+        logger.info(f"Incident {incident_id} auto-approved and completed")
+        
+        # Log completion
+        await agent_logger.log_step(
+            incident_id=incident_id,
+            step_name="complete",
+            step_order=99,
+            status="completed",
+            output_data=result,
+            duration_ms=duration_ms
+        )
+        
+        # Update incident with final classification
+        async with agent_logger.pool.acquire() as conn:
+            await conn.execute("""
+                UPDATE incidents
+                SET approval_status = 'completed',
+                    classification = $1::jsonb,
+                    severity = $2
+                WHERE incident_id = $3
+            """, json.dumps(result.get("classification")), result.get("severity"), incident_id)
+        
+        message = (
+            f"Incident {incident_id} received and processed. "
+            f"Classified as {result['severity']} severity. {result['priority']}"
+        )
         
         return IncidentResponse(
             success=result["success"],
@@ -202,6 +272,50 @@ async def submit_incident(incident: IncidentSubmission):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/v1/incidents/pending-approval")
+async def list_pending_approvals():
+    """List all incidents awaiting human approval (paused at LangGraph interrupt)."""
+    try:
+        if not agent_logger.pool:
+            await agent_logger.init_pool()
+        
+        async with agent_logger.pool.acquire() as conn:
+            rows = await conn.fetch("""
+                SELECT 
+                    incident_id,
+                    form_data,
+                    classification,
+                    severity,
+                    created_at,
+                    EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - created_at))/60 AS pending_minutes
+                FROM incidents
+                WHERE approval_status = 'pending'
+                ORDER BY created_at ASC
+            """)
+            
+            pending = []
+            for row in rows:
+                pending.append({
+                    "incident_id": row["incident_id"],
+                    "form_data": row["form_data"],
+                    "classification": row["classification"],
+                    "severity": row["severity"],
+                    "created_at": row["created_at"].isoformat(),
+                    "pending_minutes": float(row["pending_minutes"])
+                })
+            
+            return {
+                "success": True,
+                "count": len(pending),
+                "incidents": pending,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+    
+    except Exception as e:
+        logger.error(f"Error fetching pending approvals: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/v1/incidents/{incident_id}")
 async def get_incident(incident_id: str):
     return {
@@ -209,6 +323,186 @@ async def get_incident(incident_id: str):
         "status": "pending",
         "message": "Incident retrieval not yet implemented"
     }
+
+
+class ApprovalRequest(BaseModel):
+    """Model for approval/rejection requests."""
+    approved_by: str = Field(..., description="Name or ID of person approving/rejecting")
+    reason: str | None = Field(None, description="Reason for rejection (required if rejecting)")
+
+
+@app.post("/api/v1/incidents/{incident_id}/approve")
+async def approve_incident(incident_id: str, approval: ApprovalRequest):
+    """Approve a pending incident and resume LangGraph workflow from interrupt.
+    
+    This demonstrates LangGraph's HITL strength: the workflow was paused at an
+    interrupt point, state was persisted in the checkpointer, and now we resume
+    execution with human approval incorporated into the state.
+    """
+    try:
+        if not agent_logger.pool:
+            await agent_logger.init_pool()
+        
+        # Check if incident exists and is pending
+        async with agent_logger.pool.acquire() as conn:
+            row = await conn.fetchrow("""
+                SELECT approval_status, form_data, classification, severity
+                FROM incidents
+                WHERE incident_id = $1
+            """, incident_id)
+            
+            if not row:
+                raise HTTPException(status_code=404, detail=f"Incident {incident_id} not found")
+            
+            if row["approval_status"] != "pending":
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Incident {incident_id} is not at interrupt point (status: {row['approval_status']})"
+                )
+            
+            # Update to approved
+            await conn.execute("""
+                UPDATE incidents
+                SET approval_status = 'processing',
+                    approved_by = $1,
+                    approved_at = CURRENT_TIMESTAMP,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE incident_id = $2
+            """, approval.approved_by, incident_id)
+        
+        logger.info(
+            f"Incident {incident_id} approved by {approval.approved_by}, "
+            f"resuming LangGraph workflow from checkpoint"
+        )
+        
+        # Log approval
+        await agent_logger.log_step(
+            incident_id=incident_id,
+            step_name="human_approval",
+            step_order=3,
+            status="completed",
+            input_data={"approved_by": approval.approved_by, "approved": True}
+        )
+        
+        start_time = time.time()
+        
+        # Continue workflow from checkpoint (LangGraph magic!)
+        result = hitl_incident_agent.continue_after_approval(
+            incident_id=incident_id,
+            approved=True,
+            feedback=f"Approved by {approval.approved_by}"
+        )
+        
+        duration_ms = int((time.time() - start_time) * 1000)
+        
+        # Log completion
+        await agent_logger.log_step(
+            incident_id=incident_id,
+            step_name="complete",
+            step_order=99,
+            status="completed",
+            output_data=result,
+            duration_ms=duration_ms
+        )
+        
+        # Update to completed
+        async with agent_logger.pool.acquire() as conn:
+            await conn.execute("""
+                UPDATE incidents
+                SET approval_status = 'completed',
+                    classification = $1::jsonb,
+                    severity = $2
+                WHERE incident_id = $3
+            """, json.dumps(result.get("classification")), result.get("severity"), incident_id)
+        
+        return {
+            "success": result["success"],
+            "incident_id": incident_id,
+            "message": f"Incident {incident_id} approved and LangGraph workflow resumed from checkpoint",
+            "approved_by": approval.approved_by,
+            "workflow_state": "resumed_from_interrupt",
+            "result": result,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error approving incident: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/incidents/{incident_id}/reject")
+async def reject_incident(incident_id: str, approval: ApprovalRequest):
+    """Reject a pending incident - workflow will not resume."""
+    try:
+        if not approval.reason:
+            raise HTTPException(status_code=400, detail="Rejection reason is required")
+        
+        if not agent_logger.pool:
+            await agent_logger.init_pool()
+        
+        async with agent_logger.pool.acquire() as conn:
+            # Check if incident exists and is pending
+            row = await conn.fetchrow("""
+                SELECT approval_status
+                FROM incidents
+                WHERE incident_id = $1
+            """, incident_id)
+            
+            if not row:
+                raise HTTPException(status_code=404, detail=f"Incident {incident_id} not found")
+            
+            if row["approval_status"] != "pending":
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Incident {incident_id} is not at interrupt point (status: {row['approval_status']})"
+                )
+            
+            # Update to rejected
+            await conn.execute("""
+                UPDATE incidents
+                SET approval_status = 'rejected',
+                    approved_by = $1,
+                    approved_at = CURRENT_TIMESTAMP,
+                    rejection_reason = $2,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE incident_id = $3
+            """, approval.approved_by, approval.reason, incident_id)
+        
+        logger.info(f"Incident {incident_id} rejected by {approval.approved_by}: {approval.reason}")
+        
+        # Log rejection
+        await agent_logger.log_step(
+            incident_id=incident_id,
+            step_name="human_rejection",
+            step_order=3,
+            status="rejected",
+            input_data={"rejected_by": approval.approved_by, "reason": approval.reason}
+        )
+        
+        # Tell HITL agent to stop (workflow will not resume)
+        hitl_incident_agent.continue_after_approval(
+            incident_id=incident_id,
+            approved=False,
+            feedback=approval.reason
+        )
+        
+        return {
+            "success": True,
+            "incident_id": incident_id,
+            "message": f"Incident {incident_id} rejected - LangGraph workflow terminated",
+            "rejected_by": approval.approved_by,
+            "reason": approval.reason,
+            "workflow_state": "terminated_at_interrupt",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error rejecting incident: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.exception_handler(HTTPException)

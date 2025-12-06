@@ -76,8 +76,9 @@ docker-compose up -d
 
 This will start:
 - **API Service** on `http://localhost:8000`
-- **Neo4j Browser** on `http://localhost:7474`
-- **PostgreSQL** on `localhost:5432`
+- **Dashboard** on `http://localhost:8502`
+- **Neo4j Browser** on `http://localhost:7475`
+- **PostgreSQL** on `localhost:5433`
 
 #### Verify Services
 
@@ -90,13 +91,25 @@ docker-compose logs -f api
 
 # Test API health
 curl http://localhost:8000/health
+
+# Access dashboard
+open http://localhost:8502
 ```
+
+#### Access Dashboard
+
+Open `http://localhost:8502` in your browser to see:
+- **Overview Tab**: Metrics, charts, and system performance
+- **Approval Queue Tab**: Manage human-in-the-loop approvals for P1/P2 incidents
+- **All Incidents Tab**: Complete incident history with execution logs
+
+**[View Dashboard Guide →](../dashboard-guide.md)**
 
 #### Access Neo4j Browser
 
-1. Open `http://localhost:7474` in your browser
+1. Open `http://localhost:7475` in your browser
 2. Connect with:
-   - URI: `bolt://localhost:7687`
+   - URI: `bolt://localhost:7688`
    - Username: `neo4j`
    - Password: (your `NEO4J_PASSWORD` from `.env`)
 

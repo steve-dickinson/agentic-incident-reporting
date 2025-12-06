@@ -1,5 +1,6 @@
 """Streamlit dashboard for monitoring incident processing."""
 
+import json
 import os
 from datetime import datetime
 
@@ -116,109 +117,114 @@ summary = fetch_dashboard_data(API_BASE_URL)
 recent_incidents = fetch_recent_incidents(API_BASE_URL, 100)
 hourly_metrics = fetch_hourly_metrics(API_BASE_URL, 24)
 
-# Summary metrics
-if summary:
-    col1, col2, col3, col4, col5 = st.columns(5)
-    
-    with col1:
-        st.metric(
-            label="📊 Total Incidents (7d)",
-            value=summary.get("total_incidents", 0),
-            delta=None
-        )
-    
-    with col2:
-        st.metric(
-            label="🔴 Critical (P1)",
-            value=summary.get("p1_incidents", 0),
-            delta=None
-        )
-    
-    with col3:
-        st.metric(
-            label="🟠 High (P2)",
-            value=summary.get("p2_incidents", 0),
-            delta=None
-        )
-    
-    with col4:
-        st.metric(
-            label="✅ Completed",
-            value=summary.get("completed", 0),
-            delta=None
-        )
-    
-    with col5:
-        avg_ms = summary.get("avg_processing_ms", 0)
-        avg_time = float(avg_ms) / 1000 if avg_ms else 0
-        st.metric(
-            label="⏱️ Avg Time",
-            value=f"{avg_time:.1f}s",
-            delta=None
-        )
+# Create tabs
+tab1, tab2, tab3 = st.tabs(["📊 Overview", "⏳ Approval Queue", "📋 All Incidents"])
 
-st.divider()
-
-# Charts row
-if hourly_metrics:
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.subheader("📈 Incidents Over Time (24h)")
+# Tab 1: Overview (metrics and charts)
+with tab1:
+    # Summary metrics
+    if summary:
+        col1, col2, col3, col4, col5 = st.columns(5)
         
-        df_metrics = pd.DataFrame(hourly_metrics)
-        if not df_metrics.empty and 'hour' in df_metrics.columns:
-            df_metrics['hour'] = pd.to_datetime(df_metrics['hour'])
-            
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(
-                x=df_metrics['hour'],
-                y=df_metrics['total'],
-                mode='lines+markers',
-                name='Total',
-                line=dict(color='#00703C', width=2)
-            ))
-            fig.add_trace(go.Scatter(
-                x=df_metrics['hour'],
-                y=df_metrics.get('p1', 0),
-                mode='lines+markers',
-                name='P1 Critical',
-                line=dict(color='#ff4b4b', width=2)
-            ))
-            fig.add_trace(go.Scatter(
-                x=df_metrics['hour'],
-                y=df_metrics.get('p2', 0),
-                mode='lines+markers',
-                name='P2 High',
-                line=dict(color='#ffa500', width=2)
-            ))
-            
-            fig.update_layout(
-                xaxis_title="Hour",
-                yaxis_title="Count",
-                hovermode='x unified',
-                height=300
+        with col1:
+            st.metric(
+                label="📊 Total Incidents (7d)",
+                value=summary.get("total_incidents", 0),
+                delta=None
             )
-            st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
-        st.subheader("⏱️ Processing Time Trend")
         
-        if not df_metrics.empty and 'avg_time_ms' in df_metrics.columns:
-            df_metrics['avg_time_s'] = df_metrics['avg_time_ms'] / 1000
-            
-            fig = px.bar(
-                df_metrics,
-                x='hour',
-                y='avg_time_s',
-                labels={'avg_time_s': 'Avg Time (s)', 'hour': 'Hour'},
-                color='avg_time_s',
-                color_continuous_scale='Greens'
+        with col2:
+            st.metric(
+                label="🔴 Critical (P1)",
+                value=summary.get("p1_incidents", 0),
+                delta=None
             )
-            fig.update_layout(height=300)
-            st.plotly_chart(fig, use_container_width=True)
+        
+        with col3:
+            st.metric(
+                label="🟠 High (P2)",
+                value=summary.get("p2_incidents", 0),
+                delta=None
+            )
+        
+        with col4:
+            st.metric(
+                label="✅ Completed",
+                value=summary.get("completed", 0),
+                delta=None
+            )
+        
+        with col5:
+            avg_ms = summary.get("avg_processing_ms", 0)
+            avg_time = float(avg_ms) / 1000 if avg_ms else 0
+            st.metric(
+                label="⏱️ Avg Time",
+                value=f"{avg_time:.1f}s",
+                delta=None
+            )
 
-st.divider()
+    st.divider()
+
+    # Charts row
+    if hourly_metrics:
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.subheader("📈 Incidents Over Time (24h)")
+        
+            df_metrics = pd.DataFrame(hourly_metrics)
+            if not df_metrics.empty and 'hour' in df_metrics.columns:
+                df_metrics['hour'] = pd.to_datetime(df_metrics['hour'])
+                
+                fig = go.Figure()
+                fig.add_trace(go.Scatter(
+                    x=df_metrics['hour'],
+                    y=df_metrics['total'],
+                    mode='lines+markers',
+                    name='Total',
+                    line=dict(color='#00703C', width=2)
+                ))
+                fig.add_trace(go.Scatter(
+                    x=df_metrics['hour'],
+                    y=df_metrics.get('p1', 0),
+                    mode='lines+markers',
+                    name='P1 Critical',
+                    line=dict(color='#ff4b4b', width=2)
+                ))
+                fig.add_trace(go.Scatter(
+                    x=df_metrics['hour'],
+                    y=df_metrics.get('p2', 0),
+                    mode='lines+markers',
+                    name='P2 High',
+                    line=dict(color='#ffa500', width=2)
+                ))
+                
+                fig.update_layout(
+                    xaxis_title="Hour",
+                    yaxis_title="Count",
+                    hovermode='x unified',
+                    height=300
+                )
+                st.plotly_chart(fig, use_container_width=True)
+        
+        with col2:
+            st.subheader("⏱️ Processing Time Trend")
+            
+            if not df_metrics.empty and 'avg_time_ms' in df_metrics.columns:
+                df_metrics['avg_time_s'] = df_metrics['avg_time_ms'] / 1000
+                
+                fig = px.bar(
+                    df_metrics,
+                    x='hour',
+                    y='avg_time_s',
+                    labels={'avg_time_s': 'Avg Time (s)', 'hour': 'Hour'},
+                    color='avg_time_s',
+                    color_continuous_scale='Greens'
+                )
+                fig.update_layout(height=300)
+                st.plotly_chart(fig, use_container_width=True)
+
+    st.divider()
 
 # Priority distribution
 if summary:
@@ -282,135 +288,247 @@ if summary:
         fig.update_layout(height=300, showlegend=False)
         st.plotly_chart(fig, use_container_width=True)
 
-st.divider()
-
-# Recent incidents table
-st.subheader("📋 Recent Incidents")
-
-if recent_incidents:
-    df_incidents = pd.DataFrame(recent_incidents)
+# Tab 2: Approval Queue
+with tab2:
+    st.subheader("⏳ Incidents Awaiting Approval")
     
-    # Format the dataframe
-    if not df_incidents.empty:
-        # Convert timestamps
-        if 'created_at' in df_incidents.columns:
-            df_incidents['created_at'] = pd.to_datetime(df_incidents['created_at'])
-            df_incidents['time_ago'] = df_incidents['created_at'].apply(
-                lambda x: f"{int((datetime.now() - x.replace(tzinfo=None)).total_seconds() / 60)}m ago"
-            )
-        
-        # Format processing time
-        if 'processing_time_ms' in df_incidents.columns:
-            df_incidents['processing_time'] = df_incidents['processing_time_ms'].apply(
-                lambda x: f"{float(x)/1000:.2f}s" if pd.notna(x) and x else "N/A"
-            )
-        
-        # Select and rename columns for display
-        display_cols = {
-            'incident_id': 'Incident ID',
-            'incident_type': 'Type',
-            'location': 'Location',
-            'severity': 'Severity',
-            'priority': 'Priority',
-            'status': 'Status',
-            'processing_time': 'Time',
-            'time_ago': 'Created',
-            'completed_steps': 'Steps ✓',
-            'failed_steps': 'Steps ✗'
-        }
-        
-        available_cols = [col for col in display_cols.keys() if col in df_incidents.columns]
-        df_display = df_incidents[available_cols].rename(columns=display_cols)
-        
-        # Add filtering
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            priority_filter = st.multiselect(
-                "Filter by Priority",
-                options=['P1', 'P2', 'P3', 'P4'],
-                default=[]
-            )
-        
-        with col2:
-            type_filter = st.multiselect(
-                "Filter by Type",
-                options=df_incidents['incident_type'].unique().tolist() if 'incident_type' in df_incidents.columns else [],
-                default=[]
-            )
-        
-        with col3:
-            status_filter = st.multiselect(
-                "Filter by Status",
-                options=df_incidents['status'].unique().tolist() if 'status' in df_incidents.columns else [],
-                default=[]
-            )
-        
-        # Apply filters
-        if priority_filter and 'priority' in df_incidents.columns:
-            df_incidents = df_incidents[df_incidents['priority'].isin(priority_filter)]
-            df_display = df_display[df_display['Priority'].isin(priority_filter)]
-        
-        if type_filter and 'incident_type' in df_incidents.columns:
-            df_incidents = df_incidents[df_incidents['incident_type'].isin(type_filter)]
-            df_display = df_display[df_display['Type'].isin(type_filter)]
-        
-        if status_filter and 'status' in df_incidents.columns:
-            df_incidents = df_incidents[df_incidents['status'].isin(status_filter)]
-            df_display = df_display[df_display['Status'].isin(status_filter)]
-        
-        # Display table
-        st.dataframe(
-            df_display,
-            use_container_width=True,
-            hide_index=True,
-            height=400
-        )
-        
-        # Incident detail expander
-        st.subheader("🔍 Incident Details")
-        incident_ids = df_incidents['incident_id'].tolist() if 'incident_id' in df_incidents.columns else []
-        
-        if incident_ids:
-            selected_incident = st.selectbox("Select incident to view details", incident_ids)
+    # Fetch pending approvals
+    try:
+        response = requests.get(f"{API_BASE_URL}/api/v1/incidents/pending-approval", timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            pending = data.get('incidents', [])
             
-            if selected_incident:
-                try:
-                    response = requests.get(f"{API_BASE_URL}/api/v1/dashboard/incidents/{selected_incident}/logs", timeout=5)
-                    if response.status_code == 200:
-                        logs = response.json()
+            if pending:
+                st.info(f"**{len(pending)} incident(s) awaiting approval**")
+                
+                for incident in pending:
+                    incident_id = incident['incident_id']
+                    
+                    # Parse JSON strings
+                    form_data = incident.get('form_data', {})
+                    if isinstance(form_data, str):
+                        import json
+                        form_data = json.loads(form_data)
+                    
+                    classification = incident.get('classification', {})
+                    if isinstance(classification, str):
+                        import json
+                        classification = json.loads(classification)
+                    
+                    severity = incident.get('severity', 'unknown')
+                    pending_minutes = incident.get('pending_minutes', 0)
+                    
+                    # Severity badge
+                    severity_colors = {
+                        'critical': '🔴',
+                        'high': '🟠',
+                        'medium': '🟡',
+                        'low': '🟢'
+                    }
+                    severity_badge = severity_colors.get(severity, '⚪')
+                    
+                    with st.expander(f"{severity_badge} {incident_id} - {severity.upper()} ({int(pending_minutes)}m ago)"):
+                        col1, col2 = st.columns([2, 1])
                         
-                        if logs:
-                            st.write("**Execution Steps:**")
-                            for log in logs:
-                                status_emoji = "✅" if log['status'] == 'completed' else "❌" if log['status'] == 'failed' else "🔄"
-                                duration = f"{log.get('duration_ms', 0)}ms" if log.get('duration_ms') else "N/A"
+                        with col1:
+                            st.write("**Type:**", form_data.get('incident_type', 'N/A'))
+                            st.write("**Location:**", form_data.get('location', 'N/A'))
+                            st.write("**Description:**", form_data.get('description', 'N/A'))
+                            st.write("**Reporter:**", form_data.get('reporter_email', 'N/A'))
+                            st.write("**Urgency:**", form_data.get('urgency', 'N/A'))
+                            
+                            if classification:
+                                st.write("**Classification:**")
+                                st.json(classification)
+                        
+                        with col2:
+                            st.write("**Actions:**")
+                            
+                            # Approval form
+                            with st.form(key=f"approve_{incident_id}"):
+                                approved_by = st.text_input("Your name", key=f"name_approve_{incident_id}")
+                                approve_submitted = st.form_submit_button("✅ Approve & Process", type="primary")
                                 
-                                with st.expander(f"{status_emoji} Step {log['step_order']}: {log['step_name']} ({duration})"):
-                                    col1, col2 = st.columns(2)
+                                if approve_submitted:
+                                    if not approved_by:
+                                        st.error("Please enter your name")
+                                    else:
+                                        try:
+                                            approve_response = requests.post(
+                                                f"{API_BASE_URL}/api/v1/incidents/{incident_id}/approve",
+                                                json={"approved_by": approved_by},
+                                                timeout=30
+                                            )
+                                            if approve_response.status_code == 200:
+                                                st.success(f"✅ Incident approved! Processing...")
+                                                st.rerun()
+                                            else:
+                                                st.error(f"Failed to approve: {approve_response.text}")
+                                        except Exception as e:
+                                            st.error(f"Error: {e}")
+                            
+                            # Rejection form
+                            with st.form(key=f"reject_{incident_id}"):
+                                rejected_by = st.text_input("Your name", key=f"name_reject_{incident_id}")
+                                rejection_reason = st.text_area("Rejection reason", key=f"reason_{incident_id}")
+                                reject_submitted = st.form_submit_button("❌ Reject", type="secondary")
+                                
+                                if reject_submitted:
+                                    if not rejected_by or not rejection_reason:
+                                        st.error("Please enter your name and reason")
+                                    else:
+                                        try:
+                                            reject_response = requests.post(
+                                                f"{API_BASE_URL}/api/v1/incidents/{incident_id}/reject",
+                                                json={"approved_by": rejected_by, "reason": rejection_reason},
+                                                timeout=10
+                                            )
+                                            if reject_response.status_code == 200:
+                                                st.success(f"❌ Incident rejected")
+                                                st.rerun()
+                                            else:
+                                                st.error(f"Failed to reject: {reject_response.text}")
+                                        except Exception as e:
+                                            st.error(f"Error: {e}")
+            else:
+                st.success("✅ No incidents awaiting approval")
+        else:
+            st.error(f"Failed to fetch pending approvals: {response.status_code}")
+    except Exception as e:
+        st.error(f"Error fetching pending approvals: {e}")
+
+# Tab 3: All Incidents
+with tab3:
+    st.divider()
+
+    # Recent incidents table
+    st.subheader("📋 Recent Incidents")
+
+    if recent_incidents:
+        df_incidents = pd.DataFrame(recent_incidents)
+    
+        # Format the dataframe
+        if not df_incidents.empty:
+            # Convert timestamps
+            if 'created_at' in df_incidents.columns:
+                df_incidents['created_at'] = pd.to_datetime(df_incidents['created_at'])
+                df_incidents['time_ago'] = df_incidents['created_at'].apply(
+                    lambda x: f"{int((datetime.now() - x.replace(tzinfo=None)).total_seconds() / 60)}m ago"
+                )
+        
+            # Format processing time
+            if 'processing_time_ms' in df_incidents.columns:
+                df_incidents['processing_time'] = df_incidents['processing_time_ms'].apply(
+                    lambda x: f"{float(x)/1000:.2f}s" if pd.notna(x) and x else "N/A"
+                )
+        
+            # Select and rename columns for display
+            display_cols = {
+                'incident_id': 'Incident ID',
+                'incident_type': 'Type',
+                'location': 'Location',
+                'severity': 'Severity',
+                'priority': 'Priority',
+                'status': 'Status',
+                'processing_time': 'Time',
+                'time_ago': 'Created',
+                'completed_steps': 'Steps ✓',
+                'failed_steps': 'Steps ✗'
+            }
+        
+            available_cols = [col for col in display_cols.keys() if col in df_incidents.columns]
+            df_display = df_incidents[available_cols].rename(columns=display_cols)
+        
+            # Add filtering
+            col1, col2, col3 = st.columns(3)
+        
+            with col1:
+                priority_filter = st.multiselect(
+                    "Filter by Priority",
+                    options=['P1', 'P2', 'P3', 'P4'],
+                    default=[]
+                )
+        
+            with col2:
+                type_filter = st.multiselect(
+                    "Filter by Type",
+                    options=df_incidents['incident_type'].unique().tolist() if 'incident_type' in df_incidents.columns else [],
+                    default=[]
+                )
+        
+            with col3:
+                status_filter = st.multiselect(
+                    "Filter by Status",
+                    options=df_incidents['status'].unique().tolist() if 'status' in df_incidents.columns else [],
+                    default=[]
+                )
+        
+            # Apply filters
+            if priority_filter and 'priority' in df_incidents.columns:
+                df_incidents = df_incidents[df_incidents['priority'].isin(priority_filter)]
+                df_display = df_display[df_display['Priority'].isin(priority_filter)]
+        
+            if type_filter and 'incident_type' in df_incidents.columns:
+                df_incidents = df_incidents[df_incidents['incident_type'].isin(type_filter)]
+                df_display = df_display[df_display['Type'].isin(type_filter)]
+        
+            if status_filter and 'status' in df_incidents.columns:
+                df_incidents = df_incidents[df_incidents['status'].isin(status_filter)]
+                df_display = df_display[df_display['Status'].isin(status_filter)]
+        
+            # Display table
+            st.dataframe(
+                df_display,
+                use_container_width=True,
+                hide_index=True,
+                height=400
+            )
+        
+            # Incident detail expander
+            st.subheader("🔍 Incident Details")
+            incident_ids = df_incidents['incident_id'].tolist() if 'incident_id' in df_incidents.columns else []
+        
+            if incident_ids:
+                selected_incident = st.selectbox("Select incident to view details", incident_ids)
+            
+                if selected_incident:
+                    try:
+                        response = requests.get(f"{API_BASE_URL}/api/v1/dashboard/incidents/{selected_incident}/logs", timeout=5)
+                        if response.status_code == 200:
+                            logs = response.json()
+                        
+                            if logs:
+                                st.write("**Execution Steps:**")
+                                for log in logs:
+                                    status_emoji = "✅" if log['status'] == 'completed' else "❌" if log['status'] == 'failed' else "🔄"
+                                    duration = f"{log.get('duration_ms', 0)}ms" if log.get('duration_ms') else "N/A"
+                                
+                                    with st.expander(f"{status_emoji} Step {log['step_order']}: {log['step_name']} ({duration})"):
+                                        col1, col2 = st.columns(2)
                                     
-                                    with col1:
-                                        st.write("**Status:**", log['status'])
-                                        st.write("**Duration:**", duration)
-                                        if log.get('error_message'):
-                                            st.error(f"**Error:** {log['error_message']}")
+                                        with col1:
+                                            st.write("**Status:**", log['status'])
+                                            st.write("**Duration:**", duration)
+                                            if log.get('error_message'):
+                                                st.error(f"**Error:** {log['error_message']}")
                                     
-                                    with col2:
-                                        if log.get('input_data'):
-                                            st.write("**Input:**")
-                                            st.json(log['input_data'])
+                                        with col2:
+                                            if log.get('input_data'):
+                                                st.write("**Input:**")
+                                                st.json(log['input_data'])
                                         
-                                        if log.get('output_data'):
-                                            st.write("**Output:**")
-                                            st.json(log['output_data'])
+                                            if log.get('output_data'):
+                                                st.write("**Output:**")
+                                                st.json(log['output_data'])
+                            else:
+                                st.info("No execution logs found for this incident")
                         else:
-                            st.info("No execution logs found for this incident")
-                    else:
-                        st.warning(f"Could not fetch logs: {response.status_code}")
-                except Exception as e:
-                    st.error(f"Error fetching incident logs: {e}")
-else:
-    st.info("No recent incidents found")
+                            st.warning(f"Could not fetch logs: {response.status_code}")
+                    except Exception as e:
+                        st.error(f"Error fetching incident logs: {e}")
+    else:
+        st.info("No recent incidents found")
 
 # Footer
 st.divider()

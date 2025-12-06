@@ -9,6 +9,7 @@ This system demonstrates how AI agents, knowledge graphs, and semantic search ca
 ## Key Features
 
 ✨ **AI-Powered Classification** - Automatically categorizes and prioritizes incidents  
+👥 **Human-in-the-Loop** - LangGraph checkpoint interrupts for high-priority approval workflows  
 🔍 **Semantic Search** - Finds relevant guidance and regulations  
 🗺️ **Spatial Analysis** - Identifies nearby protected sites and water bodies  
 📊 **Knowledge Graph** - Tracks relationships and historical patterns  
@@ -18,6 +19,7 @@ This system demonstrates how AI agents, knowledge graphs, and semantic search ca
 ## Quick Links
 
 - **[Getting Started Guide](guides/getting_started.md)** - Set up and run the system
+- **[LangGraph HITL Pattern](guides/langgraph_hitl_pattern.md)** - Human-in-the-loop with workflow interrupts
 - **[System Architecture](architecture/system_design.md)** - Technical deep dive
 - **[Dashboard Guide](dashboard-guide.md)** - Monitor incidents in real-time
 - **[Demo Walkthrough](examples/demo_walkthrough.md)** - Example scenarios and testing
@@ -106,13 +108,16 @@ Industrial emissions affecting residents:
 
 **Real-time Streamlit Dashboard** at http://localhost:8502:
 
-- **Metrics**: Total incidents, P1/P2/P3/P4 counts, completion rates, avg processing time
-- **Charts**: Hourly trends, processing time graphs, priority distribution
-- **Incident Table**: Searchable/filterable by priority, type, status, location
-- **Execution Logs**: Step-by-step agent execution with timing and error details
+- **Overview Tab**: Metrics, charts, hourly trends, priority distribution
+- **Approval Queue Tab** ⭐: Human-in-the-loop workflow management for P1/P2 incidents
+  - View pending approvals with full incident context
+  - Approve workflows to resume from LangGraph checkpoints
+  - Reject workflows to terminate processing
+  - Demonstrates checkpoint-based HITL pattern
+- **All Incidents Tab**: Searchable/filterable table with execution logs
 - **Live Updates**: Configurable auto-refresh for real-time monitoring
 
-**[View Dashboard Guide →](dashboard-guide.md)**
+**[View Dashboard Guide →](dashboard-guide.md)** | **[HITL Pattern Guide →](guides/langgraph_hitl_pattern.md)**
 
 ### 🧪 Testing & Quality
 

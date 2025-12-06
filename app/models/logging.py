@@ -95,9 +95,18 @@ class AgentLogger:
         incident_id: str,
         form_data: dict[str, Any],
         classification: dict[str, Any] | None = None,
-        severity: str | None = None
+        severity: str | None = None,
+        approval_status: str = "approved"
     ):
-        """Log initial incident creation."""
+        """Log initial incident creation.
+        
+        Args:
+            incident_id: Unique incident identifier
+            form_data: Original form submission data
+            classification: Classification results from agent
+            severity: Severity level (critical, high, medium, low)
+            approval_status: Approval workflow status (pending, approved, rejected, processing, completed)
+        """
         if not self.pool:
             await self.init_pool()
         
@@ -105,16 +114,21 @@ class AgentLogger:
             async with self.pool.acquire() as conn:
                 await conn.execute("""
                     INSERT INTO incidents 
-                    (incident_id, form_data, classification, severity, status)
-                    VALUES ($1, $2::jsonb, $3::jsonb, $4, 'processing')
+                    (incident_id, form_data, classification, severity, status, approval_status)
+                    VALUES ($1, $2::jsonb, $3::jsonb, $4, 'processing', $5::approval_status)
                     ON CONFLICT (incident_id) DO UPDATE
-                    SET form_data = $2::jsonb, classification = $3::jsonb, severity = $4, status = 'processing'
+                    SET form_data = $2::jsonb, 
+                        classification = $3::jsonb, 
+                        severity = $4, 
+                        status = 'processing',
+                        approval_status = $5::approval_status
                 """, incident_id, 
                 json.dumps(form_data), 
                 json.dumps(classification) if classification else None, 
-                severity)
+                severity,
+                approval_status)
                 
-                logger.info(f"Logged incident creation: {incident_id}")
+                logger.info(f"Logged incident creation: {incident_id} with approval_status={approval_status}")
         
         except Exception as e:
             logger.error(f"Failed to log incident: {e}")

@@ -75,6 +75,7 @@ nav:
   - Home: index.md
   - Getting Started:
     - Quick Start: guides/getting_started.md
+    - LangGraph HITL Pattern: guides/langgraph_hitl_pattern.md
   - Architecture:
     - System Design: architecture/system_design.md
   - User Guides:

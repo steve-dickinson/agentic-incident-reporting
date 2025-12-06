@@ -78,6 +78,8 @@ services:
       - "8502:8501"
     environment:
       - API_BASE_URL=http://api:8000
+    volumes:
+      - ./dashboard:/app
     depends_on:
       - api
     networks:

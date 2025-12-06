@@ -136,10 +136,11 @@ pip install -r requirements.txt
 ## ✨ Key Features
 
 - **🤖 Intelligent Classification** - AI-powered incident categorization with P1-P4 priority assignment
+- **👥 Human-in-the-Loop** - LangGraph checkpoint-based workflow interrupts for high-priority incident approval
 - **🗺️ Spatial Awareness** - Integration with Neo4j to identify nearby protected sites and water bodies
 - **📚 Semantic Search** - pgvector-powered search over guidance documents and regulations
 - **🔔 Automated Notifications** - GOV.UK Notify integration for email/SMS alerts
-- **📊 Real-time Dashboard** - Streamlit dashboard with metrics, charts, and execution logs
+- **📊 Real-time Dashboard** - Streamlit dashboard with approval queue, metrics, charts, and execution logs
 - **🔍 Full Auditability** - Comprehensive logging of all agent decisions and actions
 - **🧪 Well-Tested** - 72 tests with 57% coverage across unit and integration tests
 - **📖 Documented** - Complete API docs, guides, and example scenarios
@@ -148,14 +149,24 @@ pip install -r requirements.txt
 
 Access the Streamlit dashboard at http://localhost:8502 to monitor:
 
+### Tab 1: Overview
 - **Real-time metrics**: Total incidents, priorities (P1-P4), completion rates
 - **Processing times**: Average time per incident and hourly trends
 - **Priority distribution**: Visual breakdown of incident priorities
-- **Recent incidents**: Searchable table with filtering
-- **Execution logs**: Step-by-step agent execution details with timing
 - **Charts**: Hourly incident trends, processing time graphs, status overview
 
-The dashboard provides full visibility into agent execution for debugging and monitoring.
+### Tab 2: Approval Queue ⭐
+- **Pending approvals**: High-priority incidents (P1/P2) awaiting human review
+- **Workflow details**: View classification, severity, and incident context
+- **Approve/Reject**: Resume or terminate LangGraph workflows from checkpoints
+- **Human-in-the-Loop**: Demonstrates LangGraph's interrupt-based HITL pattern
+
+### Tab 3: All Incidents
+- **Recent incidents**: Searchable table with filtering by priority, type, status
+- **Execution logs**: Step-by-step agent execution details with timing
+- **Incident details**: Full audit trail for each incident
+
+The dashboard provides full visibility into agent execution and human approval workflows.
 
 ## 🧪 Testing
 
@@ -191,6 +202,7 @@ python -m app.tools.synthetic_data
 ## 📚 Documentation
 
 - **[Getting Started Guide](docs/guides/getting_started.md)** - Complete setup walkthrough
+- **[LangGraph HITL Pattern](docs/guides/langgraph_hitl_pattern.md)** - Human-in-the-loop workflow with checkpoints
 - **[System Architecture](docs/architecture/system_design.md)** - Technical deep dive
 - **[Dashboard Guide](docs/dashboard-guide.md)** - Real-time monitoring and analytics
 - **[Demo Walkthrough](docs/examples/demo_walkthrough.md)** - Example scenarios and testing

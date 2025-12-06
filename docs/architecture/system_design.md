@@ -69,7 +69,13 @@ The Defra AI Agent for Environmental Incident Reporting is a microservices-based
 
 ### 2. Agent Orchestration (LangChain + LangGraph)
 
-**Purpose**: Coordinate AI reasoning and tool execution
+**Purpose**: Coordinate AI reasoning and tool execution with human-in-the-loop controls
+
+**Key Features**:
+- **Checkpoint-based State Management**: LangGraph MemorySaver persists workflow state
+- **Interrupt-based HITL**: High-priority incidents (P1/P2) pause for human approval
+- **Workflow Resumption**: Continue from exact checkpoint after human decision
+- **Full Auditability**: Every step logged with inputs, outputs, and timing
 
 **Workflow States**:
 
@@ -118,9 +124,11 @@ The Defra AI Agent for Environmental Incident Reporting is a microservices-based
 
 **Technology Stack**:
 - LangChain 0.1+
-- LangGraph 0.0.20+
+- LangGraph 0.0.20+ (with MemorySaver checkpointer)
 - OpenAI GPT-4 Turbo
 - LangSmith (observability)
+
+**[Learn more about the HITL pattern →](../guides/langgraph_hitl_pattern.md)**
 
 ### 3. Knowledge Graph (Neo4j)
 
