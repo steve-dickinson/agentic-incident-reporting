@@ -1,11 +1,10 @@
-"""
-Configuration management for the Defra AI Agent
-"""
+"""Configuration management using Pydantic settings."""
+
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    """Application settings loaded from environment variables"""
+    """Application settings from environment variables."""
     
     # API Configuration
     api_host: str = "0.0.0.0"
@@ -15,7 +14,7 @@ class Settings(BaseSettings):
     
     # OpenAI Configuration
     openai_api_key: str
-    openai_model: str = "gpt-4-turbo-preview"
+    openai_model_name: str = "gpt-4-turbo-preview"
     openai_embedding_model: str = "text-embedding-3-small"
     
     # Neo4j Configuration
@@ -31,10 +30,9 @@ class Settings(BaseSettings):
     postgres_user: str = "postgres"
     postgres_password: str
     
-    # GOV.UK Notify Configuration
+    # GOV.UK Notify Configuration (Email only - SMS disabled to reduce costs)
     notify_api_key: str
     notify_email_template_id: str | None = None
-    notify_sms_template_id: str | None = None
     notify_test_mode: bool = True
     
     # Agent Configuration
@@ -57,14 +55,11 @@ class Settings(BaseSettings):
     
     @property
     def postgres_url(self) -> str:
-        """Construct PostgreSQL connection URL"""
         return f"postgresql://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
     
     @property
     def allowed_origins_list(self) -> list[str]:
-        """Parse allowed origins into a list"""
         return [origin.strip() for origin in self.allowed_origins.split(",")]
 
 
-# Create global settings instance
 settings = Settings()

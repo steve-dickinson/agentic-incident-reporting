@@ -50,7 +50,7 @@ services:
     image: pgvector/pgvector:pg16
     container_name: defra-postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"  # Changed to avoid conflict
     environment:
       - POSTGRES_DB=${POSTGRES_DB:-incident_reporting}
       - POSTGRES_USER=${POSTGRES_USER:-postgres}

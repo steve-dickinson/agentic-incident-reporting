@@ -1,6 +1,5 @@
-"""
-FastAPI application for Defra AI Agent
-"""
+"""FastAPI application for environmental incident reporting."""
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -9,14 +8,14 @@ from typing import Any
 import logging
 from datetime import datetime
 
-# Configure logging
+from app.agents.incident_agent import incident_agent
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
-# Create FastAPI app
 app = FastAPI(
     title="Defra AI Agent API",
     description="AI-powered environmental incident reporting system",
@@ -25,17 +24,15 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure properly in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-# Pydantic models for API
 class IncidentSubmission(BaseModel):
     """Model for incident form submission"""
     incident_type: str = Field(..., description="Type of environmental incident")
@@ -69,15 +66,17 @@ class IncidentResponse(BaseModel):
     success: bool
     incident_id: str
     message: str
-    classification: str | None = None
-    actions_taken: list[str] | None = None
+    severity: str | None = None
+    priority: str | None = None
+    classification: dict[str, Any] | None = None
+    actions: list[str] | None = None
+    notifications: dict[str, Any] | None = None
+    errors: list[str] | None = None
     timestamp: str
 
 
-# Health check endpoint
 @app.get("/")
 async def root():
-    """Root endpoint with API information"""
     return {
         "service": "Defra AI Agent API",
         "version": "0.1.0",
@@ -92,7 +91,6 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint for monitoring"""
     return {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
@@ -102,31 +100,39 @@ async def health_check():
 
 @app.post("/api/v1/incidents/submit", response_model=IncidentResponse)
 async def submit_incident(incident: IncidentSubmission):
-    """
-    Submit an environmental incident for AI agent processing
-    
-    This endpoint receives structured form data, triggers the LangChain agent,
-    and returns the classification and actions taken.
-    """
+    """Submit incident for AI classification and notification."""
     try:
         logger.info(f"Received incident submission: {incident.incident_type}")
         
-        # Generate incident ID
         incident_id = f"INC-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}"
         
-        # TODO: Trigger LangChain agent orchestration
-        # TODO: Query Neo4j for spatial context
-        # TODO: Perform semantic search on guidance docs
-        # TODO: Send notifications via GOV.UK Notify
-        # TODO: Log to knowledge graph
-        
-        # Placeholder response
-        return IncidentResponse(
-            success=True,
+        result = incident_agent.process_incident(
             incident_id=incident_id,
-            message="Incident received and being processed",
-            classification=None,
-            actions_taken=["Incident logged", "Initial assessment pending"],
+            incident_type=incident.incident_type,
+            description=incident.description,
+            location=incident.location,
+            reporter_email=incident.reporter_email,
+            urgency=incident.urgency or "medium"
+        )
+        
+        if result["success"]:
+            message = (
+                f"Incident {incident_id} received and classified as "
+                f"{result['severity']} severity. {result['priority']}"
+            )
+        else:
+            message = f"Incident {incident_id} received but processing encountered errors"
+        
+        return IncidentResponse(
+            success=result["success"],
+            incident_id=incident_id,
+            message=message,
+            severity=result.get("severity"),
+            priority=result.get("priority"),
+            classification=result.get("classification"),
+            actions=result.get("actions"),
+            notifications=result.get("notifications"),
+            errors=result.get("errors", []),
             timestamp=datetime.utcnow().isoformat()
         )
         
@@ -137,8 +143,6 @@ async def submit_incident(incident: IncidentSubmission):
 
 @app.get("/api/v1/incidents/{incident_id}")
 async def get_incident(incident_id: str):
-    """Retrieve incident details by ID"""
-    # TODO: Implement incident retrieval from database
     return {
         "incident_id": incident_id,
         "status": "pending",
@@ -146,10 +150,8 @@ async def get_incident(incident_id: str):
     }
 
 
-# Exception handlers
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc):
-    """Custom HTTP exception handler"""
     return JSONResponse(
         status_code=exc.status_code,
         content={
@@ -162,8 +164,7 @@ async def http_exception_handler(request, exc):
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request, exc):
-    """General exception handler"""
-    logger.error(f"Unhandled exception: {str(exc)}")
+    logger.error(f"Unhandled exception: {exc}")
     return JSONResponse(
         status_code=500,
         content={

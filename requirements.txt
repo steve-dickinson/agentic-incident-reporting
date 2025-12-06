@@ -1,16 +1,16 @@
 # Core Framework
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-pydantic==2.5.3
-pydantic-settings==2.1.0
-python-dotenv==1.0.0
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.7.4
+pydantic-settings>=2.1.0
+python-dotenv>=1.0.0
 
 # AI/ML Stack
-langchain==0.1.4
-langchain-openai==0.0.5
-langchain-community==0.0.16
-langgraph==0.0.20
-openai==1.10.0
+langchain>=0.3.0
+langchain-openai>=0.2.0
+langchain-community>=0.3.0
+langgraph>=0.2.0
+openai>=1.10.0
 
 # Database Drivers
 neo4j==5.16.0
@@ -18,16 +18,12 @@ psycopg2-binary==2.9.9
 pgvector==0.2.4
 
 # GOV.UK Notify
-notifications-python-client==9.0.0
+notifications-python-client>=9.0.0
 
-# Vector Store & Embeddings
-sentence-transformers==2.3.1
-chromadb==0.4.22
-
-# Utilities
-httpx==0.26.0
-python-multipart==0.0.6
-aiofiles==23.2.1
+# Utilities (removed heavy ML dependencies - chromadb, sentence-transformers)
+httpx>=0.26.0
+python-multipart>=0.0.6
+aiofiles>=23.2.1
 
 # Testing
 pytest==7.4.4

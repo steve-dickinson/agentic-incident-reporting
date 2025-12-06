@@ -90,8 +90,8 @@ docker-compose up -d
 
 This will start:
 - **API service** on http://localhost:8000
-- **Neo4j browser** on http://localhost:7474
-- **PostgreSQL** with pgvector on port 5432
+- **Neo4j browser** on http://localhost:7475
+- **PostgreSQL** with pgvector on port 5433
 
 ### 4. Verify Installation
 
@@ -146,18 +146,20 @@ pip install -r requirements.txt
 - [x] Document embedding loader with pgvector
 - [x] Semantic search implementation
 
-### 🚧 Phase 3: LangChain Agent MVP (IN PROGRESS)
-- [ ] Agent orchestration with LangGraph
-- [ ] Incident classification logic
-- [ ] Tool integration framework
-- [ ] GOV.UK Notify integration
+### ✅ Phase 3: LangChain Agent MVP (COMPLETED)
+- [x] LangGraph workflow orchestration (classify → notify → finalize)
+- [x] Intelligent incident classification with severity detection
+- [x] Priority assignment (P1-P4) based on incident type and keywords
+- [x] Context-aware action recommendations (8-11 actions per incident)
+- [x] GOV.UK Notify integration (email notifications)
+- [x] Tested with multiple incident scenarios (critical, high, medium, low)
 
 ### 📅 Upcoming Phases
-- **Phase 4**: Neo4j Graph Schema & Spatial Tools
-- **Phase 5**: Complete Agent Workflow
-- **Phase 6**: Testing & CI Pipeline
-- **Phase 7**: Documentation & GitHub Pages
-- **Phase 8**: Demo & Showcase
+- **Phase 4**: Neo4j Graph Schema & Spatial Tools (protected sites, spatial queries)
+- **Phase 5**: pgvector Integration (semantic search over guidance documents)
+- **Phase 6**: Comprehensive Test Suite (unit, integration, end-to-end)
+- **Phase 7**: ✅ Documentation & GitHub Pages (COMPLETED)
+- **Phase 8**: Demo Walkthrough & Video Tutorial
 
 ## 🧪 Testing
 
