@@ -75,27 +75,10 @@ nav:
   - Home: index.md
   - Getting Started:
     - Quick Start: guides/getting_started.md
-    - Installation: guides/installation.md
-    - Configuration: guides/configuration.md
   - Architecture:
     - System Design: architecture/system_design.md
-    - Data Model: architecture/data_model.md
-    - API Reference: architecture/api.md
-  - Guides:
-    - Development Guide: guides/development.md
-    - Testing Guide: guides/testing.md
-    - Deployment Guide: guides/deployment.md
-  - Examples:
-    - Basic Usage: examples/basic_usage.md
-    - Advanced Scenarios: examples/advanced.md
-  - API Reference:
-    - Agents: api/agents.md
-    - Tools: api/tools.md
-    - Models: api/models.md
   - About:
     - Progress Log: progress.md
-    - Contributing: contributing.md
-    - License: license.md
 
 extra:
   social:

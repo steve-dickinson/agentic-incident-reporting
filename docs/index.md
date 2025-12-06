@@ -162,13 +162,6 @@ response = requests.post(
 print(response.json())
 ```
 
-## Documentation Structure
-
-- **[Guides](guides/)** - Step-by-step tutorials
-- **[Architecture](architecture/)** - System design and patterns
-- **[Examples](examples/)** - Sample code and use cases
-- **[API Reference](api/)** - Detailed API documentation
-
 ## Contributing
 
 This is a prototype/showcase project. Contributions for educational purposes are welcome!
@@ -180,7 +173,7 @@ This is a prototype/showcase project. Contributions for educational purposes are
 
 ## License
 
-MIT License - See [LICENSE](license.md) for details
+MIT License - See [LICENSE](https://github.com/steve-dickinson/agentic-incident-reporting/blob/main/LICENSE) on GitHub for details
 
 ## Acknowledgments
 

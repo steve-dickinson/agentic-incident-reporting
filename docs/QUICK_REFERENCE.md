@@ -181,7 +181,7 @@ docker build -t defra-agent:latest .
 
 | Doc | Purpose |
 |-----|---------|
-| [README.md](../README.md) | Project overview |
+| [README.md](https://github.com/steve-dickinson/agentic-incident-reporting#readme) | Project overview |
 | [Getting Started](guides/getting_started.md) | Setup guide |
 | [Architecture](architecture/system_design.md) | System design |
 | [Progress Log](progress.md) | Development status |
