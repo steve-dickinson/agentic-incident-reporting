@@ -99,10 +99,10 @@ Industrial emissions affecting residents:
 - [x] Automated retrieval of relevant regulations and procedures
 - [x] GOV.UK Notify integration (email notifications)
 - [x] Comprehensive documentation and GitHub Pages
+- [x] Comprehensive test suite (72 tests, 57% coverage)
 
 ### In Progress 🚧
 
-- [ ] Comprehensive automated test suite
 - [ ] CI/CD pipeline with GitHub Actions
 
 ### Planned 📅
