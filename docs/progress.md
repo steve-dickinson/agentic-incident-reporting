@@ -170,24 +170,49 @@ agentic-incident-reporting/
 - Comprehensive action recommendations tailored to each scenario
 - Integration with GOV.UK Notify for professional communications
 
-#### Phase 4: Neo4j Integration
+#### Phase 4: Neo4j Graph Integration ✅
 
-**To Do:**
-1. Design graph schema:
-   - Protected sites (SAC, SSSI, NNR)
-   - Water bodies
-   - Administrative boundaries
-   - Historical incidents
+**Completed:**
 
-2. Create Cypher query tools:
-   - Spatial proximity search
-   - Historical incident patterns
-   - Protected site lookups
+1. **Graph Schema Design:**
+   - Created comprehensive Cypher schema with constraints and indexes
+   - Protected sites: SSSI, SAC, NNR, Ramsar designations
+   - Water bodies: rivers, lakes, estuaries, coastal waters
+   - Spatial point indexes for efficient distance queries
+   - Relationship types: NEAR (with distance), AFFECTS, FLOWS_THROUGH
 
-3. Load sample data:
-   - UK protected sites
-   - Major water bodies
-   - Sample incident history
+2. **Spatial Query Tools:**
+   - `find_nearby_protected_sites`: Search within 5km radius
+   - `find_nearby_water_bodies`: Search within 10km radius  
+   - `check_similar_incidents`: Historical pattern detection (25km, 90 days)
+   - `get_site_regulations`: Regulatory information lookup
+   - Neo4j connection management and error handling
+
+3. **Sample Data Loaded:**
+   - 10 UK protected sites (Thames Estuary Marshes, River Eden SAC, Lake Windermere, etc.)
+   - 8 major water bodies (River Thames, River Severn, Lake Windermere, Norfolk Broads)
+   - Spatial relationships: 10 NEAR relationships created
+   - All sites include: designation type, area, features, vulnerabilities
+
+4. **Agent Integration:**
+   - Added spatial context step to LangGraph workflow: classify → spatial → notify → finalize
+   - Automatic spatial queries when coordinates provided
+   - Spatial context included in incident response
+   - Tested with real UK coordinates (Lake District, Thames Estuary)
+
+5. **Testing & Validation:**
+   - Lake Windermere incident: Found SSSI 0km away, water body with good quality ✓
+   - Thames Estuary oil spill: Found protected marshes vulnerable to oil spills ✓
+   - Spatial queries return distance, designation type, vulnerability info ✓
+   - No historical incidents found (database newly initialized) ✓
+
+**Key Features:**
+- Point-based spatial search using Neo4j's built-in distance functions
+- Multi-designation support (sites can have SSSI + SAC + Ramsar)
+- Vulnerability matching (incident type vs site vulnerabilities)
+- Real-time spatial context enrichment for every incident
+
+#### Phase 5: pgvector Integration
 
 ### Files Created/Modified
 

@@ -92,12 +92,14 @@ Industrial emissions affecting residents:
 - [x] LangChain agent with LangGraph workflow orchestration
 - [x] Intelligent incident classification with severity detection (P1-P4 priorities)
 - [x] Context-aware action recommendations
+- [x] Neo4j graph database with 10 UK protected sites and 8 water bodies
+- [x] Spatial query tools (nearby sites within 5km, water bodies within 10km)
+- [x] Historical incident pattern detection (similar incidents within 25km)
 - [x] GOV.UK Notify integration (email notifications)
 - [x] Comprehensive documentation and GitHub Pages
 
 ### In Progress 🚧
 
-- [ ] Neo4j graph schema for protected sites and spatial data
 - [ ] pgvector semantic search over guidance documents
 - [ ] Comprehensive automated test suite
 - [ ] CI/CD pipeline with GitHub Actions
@@ -174,20 +176,5 @@ This is a prototype/showcase project. Contributions for educational purposes are
 ## License
 
 MIT License - See [LICENSE](https://github.com/steve-dickinson/agentic-incident-reporting/blob/main/LICENSE) on GitHub for details
-
-## Acknowledgments
-
-- **Defra Digital Services** - Use case and requirements
-- **LangChain** - Agent framework
-- **Neo4j** - Knowledge graph technology
-- **GOV.UK** - Notification infrastructure
-
-## Contact
-
-**Maintainer**: Defra AI Innovation Team  
-**Status**: Development (Prototype)  
-**GitHub**: [steve-dickinson/agentic-incident-reporting](https://github.com/steve-dickinson/agentic-incident-reporting)
-
----
 
 ⚠️ **Note**: This is a prototype using synthetic data. Not for production use without proper security, privacy, and compliance review.

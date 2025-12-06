@@ -8,6 +8,11 @@ import logging
 from app.models.config import settings
 from app.tools.classification import classify_incident_tool
 from app.tools.notify import send_notification_tool
+from app.tools.spatial import (
+    find_nearby_protected_sites,
+    find_nearby_water_bodies,
+    check_similar_incidents
+)
 
 logger = logging.getLogger(__name__)
 
@@ -18,19 +23,22 @@ class IncidentState(TypedDict):
     incident_type: str
     description: str
     location: str
+    latitude: float | None
+    longitude: float | None
     reporter_email: str | None
     urgency: str
     classification: dict[str, Any] | None
     severity: str | None
     priority: str | None
     actions: list[str] | None
+    spatial_context: dict[str, Any] | None
     notifications_sent: dict[str, Any] | None
     step: str
     errors: list[str]
 
 
 class IncidentAgent:
-    """Processes incidents through classify -> notify -> finalize workflow."""
+    """Processes incidents through classify -> spatial -> notify -> finalize workflow."""
     
     def __init__(self):
         self.llm = ChatOpenAI(
@@ -39,18 +47,26 @@ class IncidentAgent:
             api_key=settings.openai_api_key
         )
         
-        self.tools = [classify_incident_tool, send_notification_tool]
+        self.tools = [
+            classify_incident_tool,
+            send_notification_tool,
+            find_nearby_protected_sites,
+            find_nearby_water_bodies,
+            check_similar_incidents
+        ]
         self.workflow = self._create_workflow()
     
     def _create_workflow(self) -> StateGraph:
         workflow = StateGraph(IncidentState)
         
         workflow.add_node("classify", self._classify_incident)
+        workflow.add_node("spatial", self._check_spatial_context)
         workflow.add_node("notify", self._send_notifications)
         workflow.add_node("finalize", self._finalize_response)
         
         workflow.set_entry_point("classify")
-        workflow.add_edge("classify", "notify")
+        workflow.add_edge("classify", "spatial")
+        workflow.add_edge("spatial", "notify")
         workflow.add_edge("notify", "finalize")
         workflow.add_edge("finalize", END)
         
@@ -73,14 +89,65 @@ class IncidentAgent:
             state["actions"] = result["required_actions"]
             state["step"] = "classified"
             
-            logger.info(
-                f"Incident {state['incident_id']} classified as "
-                f"{result['severity']} severity"
-            )
+            logger.info(f"Classified as {state['severity']} severity, {state['priority']} priority")
             
         except Exception as e:
             logger.error(f"Classification error: {e}")
             state["errors"].append(f"Classification failed: {str(e)}")
+            state["severity"] = "unknown"
+            state["priority"] = "P4"
+        
+        return state
+    
+    def _check_spatial_context(self, state: IncidentState) -> IncidentState:
+        """Check for nearby protected sites and water bodies."""
+        try:
+            logger.info(f"Checking spatial context for incident {state['incident_id']}")
+            
+            spatial_info = {}
+            
+            # Only check spatial context if coordinates provided
+            if state.get("latitude") and state.get("longitude"):
+                lat = state["latitude"]
+                lon = state["longitude"]
+                
+                # Find nearby protected sites
+                sites_result = find_nearby_protected_sites.invoke({
+                    "latitude": lat,
+                    "longitude": lon,
+                    "radius_km": 5.0
+                })
+                spatial_info["protected_sites"] = sites_result
+                
+                # Find nearby water bodies
+                water_result = find_nearby_water_bodies.invoke({
+                    "latitude": lat,
+                    "longitude": lon,
+                    "radius_km": 10.0
+                })
+                spatial_info["water_bodies"] = water_result
+                
+                # Check for similar historical incidents
+                similar_result = check_similar_incidents.invoke({
+                    "incident_type": state["incident_type"],
+                    "latitude": lat,
+                    "longitude": lon,
+                    "days_back": 90,
+                    "radius_km": 25.0
+                })
+                spatial_info["historical_incidents"] = similar_result
+                
+                logger.info(f"Spatial context gathered: {len(spatial_info)} categories")
+            else:
+                spatial_info["message"] = "No coordinates provided; spatial queries skipped"
+            
+            state["spatial_context"] = spatial_info
+            state["step"] = "spatial_checked"
+            
+        except Exception as e:
+            logger.error(f"Spatial context error: {e}")
+            state["errors"].append(f"Spatial query failed: {str(e)}")
+            state["spatial_context"] = {"error": str(e)}
         
         return state
     
@@ -117,6 +184,8 @@ class IncidentAgent:
         incident_type: str,
         description: str,
         location: str,
+        latitude: float | None = None,
+        longitude: float | None = None,
         reporter_email: str | None = None,
         urgency: str = "medium"
     ) -> dict[str, Any]:
@@ -125,12 +194,15 @@ class IncidentAgent:
             "incident_type": incident_type,
             "description": description,
             "location": location,
+            "latitude": latitude,
+            "longitude": longitude,
             "reporter_email": reporter_email,
             "urgency": urgency,
             "classification": None,
             "severity": None,
             "priority": None,
             "actions": None,
+            "spatial_context": None,
             "notifications_sent": None,
             "step": "initialized",
             "errors": []
@@ -146,6 +218,7 @@ class IncidentAgent:
                 "priority": final_state["priority"],
                 "actions": final_state["actions"],
                 "classification": final_state["classification"],
+                "spatial_context": final_state.get("spatial_context"),
                 "notifications": final_state["notifications_sent"],
                 "errors": final_state["errors"]
             }

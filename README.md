@@ -147,15 +147,23 @@ pip install -r requirements.txt
 - [x] Semantic search implementation
 
 ### ✅ Phase 3: LangChain Agent MVP (COMPLETED)
-- [x] LangGraph workflow orchestration (classify → notify → finalize)
+- [x] LangGraph workflow orchestration (classify → spatial → notify → finalize)
 - [x] Intelligent incident classification with severity detection
 - [x] Priority assignment (P1-P4) based on incident type and keywords
 - [x] Context-aware action recommendations (8-11 actions per incident)
+- [x] Spatial queries for nearby protected sites and water bodies
 - [x] GOV.UK Notify integration (email notifications)
 - [x] Tested with multiple incident scenarios (critical, high, medium, low)
 
+### ✅ Phase 4: Neo4j Graph Integration (COMPLETED)
+- [x] Graph schema for protected sites (SSSI, SAC, NNR, Ramsar)
+- [x] Water bodies (rivers, lakes, estuaries, coastal waters)
+- [x] Spatial query tools (nearby sites, water bodies, historical incidents)
+- [x] Loaded 10 UK protected sites and 8 major water bodies
+- [x] Integrated spatial context into agent workflow
+- [x] Tested spatial queries with real coordinates
+
 ### 📅 Upcoming Phases
-- **Phase 4**: Neo4j Graph Schema & Spatial Tools (protected sites, spatial queries)
 - **Phase 5**: pgvector Integration (semantic search over guidance documents)
 - **Phase 6**: Comprehensive Test Suite (unit, integration, end-to-end)
 - **Phase 7**: ✅ Documentation & GitHub Pages (COMPLETED)

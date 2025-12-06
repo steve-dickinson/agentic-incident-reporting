@@ -1,0 +1,112 @@
+[
+  {
+    "site_id": "SSSI-001",
+    "name": "Thames Estuary Marshes",
+    "designation_type": "SSSI",
+    "area_hectares": 2514.0,
+    "latitude": 51.5074,
+    "longitude": 0.4278,
+    "features": ["Saltmarsh", "Mudflats", "Coastal birds"],
+    "designations": ["SSSI", "SPA", "Ramsar"],
+    "vulnerable_to": ["water_pollution", "chemical_spill", "oil_spill"]
+  },
+  {
+    "site_id": "SAC-001",
+    "name": "River Eden",
+    "designation_type": "SAC",
+    "area_hectares": 2430.0,
+    "latitude": 54.7382,
+    "longitude": -2.6902,
+    "features": ["Atlantic salmon", "River lamprey", "White-clawed crayfish"],
+    "designations": ["SAC", "SSSI"],
+    "vulnerable_to": ["water_pollution", "chemical_spill", "sewage_discharge"]
+  },
+  {
+    "site_id": "NNR-001",
+    "name": "Wicken Fen",
+    "designation_type": "NNR",
+    "area_hectares": 255.0,
+    "latitude": 52.3000,
+    "longitude": 0.2900,
+    "features": ["Wetland", "Rare invertebrates", "Fen habitats"],
+    "designations": ["NNR", "SSSI", "Ramsar"],
+    "vulnerable_to": ["water_pollution", "illegal_dumping"]
+  },
+  {
+    "site_id": "SSSI-002",
+    "name": "Peak District Moorlands",
+    "designation_type": "SSSI",
+    "area_hectares": 86000.0,
+    "latitude": 53.3500,
+    "longitude": -1.8300,
+    "features": ["Blanket bog", "Upland birds", "Heather moorland"],
+    "designations": ["SSSI", "SAC", "SPA"],
+    "vulnerable_to": ["air_pollution", "wildfire", "illegal_dumping"]
+  },
+  {
+    "site_id": "SAC-002",
+    "name": "Solent Maritime",
+    "designation_type": "SAC",
+    "area_hectares": 11313.0,
+    "latitude": 50.8000,
+    "longitude": -1.3000,
+    "features": ["Estuaries", "Coastal lagoons", "Seagrass beds"],
+    "designations": ["SAC", "SPA", "Ramsar"],
+    "vulnerable_to": ["oil_spill", "chemical_spill", "sewage_discharge"]
+  },
+  {
+    "site_id": "SSSI-003",
+    "name": "Lake Windermere",
+    "designation_type": "SSSI",
+    "area_hectares": 1485.0,
+    "latitude": 54.3500,
+    "longitude": -2.9300,
+    "features": ["Freshwater lake", "Arctic charr", "Rare invertebrates"],
+    "designations": ["SSSI"],
+    "vulnerable_to": ["water_pollution", "chemical_spill", "sewage_discharge"]
+  },
+  {
+    "site_id": "NNR-002",
+    "name": "Holme Fen",
+    "designation_type": "NNR",
+    "area_hectares": 262.0,
+    "latitude": 52.4800,
+    "longitude": -0.2200,
+    "features": ["Ancient woodland", "Birch carr", "Rare butterflies"],
+    "designations": ["NNR", "SSSI"],
+    "vulnerable_to": ["air_pollution", "wildfire", "illegal_dumping"]
+  },
+  {
+    "site_id": "SSSI-004",
+    "name": "Norfolk Broads",
+    "designation_type": "SSSI",
+    "area_hectares": 28500.0,
+    "latitude": 52.6200,
+    "longitude": 1.6200,
+    "features": ["Wetland", "Reed beds", "Swallowtail butterfly"],
+    "designations": ["SSSI", "SAC", "SPA", "Ramsar"],
+    "vulnerable_to": ["water_pollution", "sewage_discharge", "boat_pollution"]
+  },
+  {
+    "site_id": "SAC-003",
+    "name": "Borrowdale Woodland",
+    "designation_type": "SAC",
+    "area_hectares": 816.0,
+    "latitude": 54.5500,
+    "longitude": -3.1500,
+    "features": ["Atlantic oak woodland", "Lichens", "Mosses"],
+    "designations": ["SAC", "SSSI"],
+    "vulnerable_to": ["air_pollution", "acid_rain", "wildfire"]
+  },
+  {
+    "site_id": "SSSI-005",
+    "name": "Dungeness",
+    "designation_type": "SSSI",
+    "area_hectares": 1772.0,
+    "latitude": 50.9200,
+    "longitude": 0.9700,
+    "features": ["Shingle beach", "Rare plants", "Coastal birds"],
+    "designations": ["SSSI", "SAC", "SPA", "NNR", "Ramsar"],
+    "vulnerable_to": ["coastal_pollution", "oil_spill", "illegal_dumping"]
+  }
+]

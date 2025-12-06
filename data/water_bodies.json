@@ -1,0 +1,91 @@
+[
+  {
+    "body_id": "RIVER-001",
+    "name": "River Thames",
+    "water_type": "river",
+    "length_km": 346,
+    "latitude": 51.4934,
+    "longitude": -0.1276,
+    "catchment_area_km2": 12935,
+    "protected_sites_nearby": ["SSSI-001"],
+    "water_quality_status": "moderate",
+    "major_tributaries": ["River Lea", "River Wey", "River Mole"]
+  },
+  {
+    "body_id": "RIVER-002",
+    "name": "River Severn",
+    "water_type": "river",
+    "length_km": 354,
+    "latitude": 51.5500,
+    "longitude": -2.5800,
+    "catchment_area_km2": 11420,
+    "protected_sites_nearby": [],
+    "water_quality_status": "good",
+    "major_tributaries": ["River Avon", "River Teme", "River Vyrnwy"]
+  },
+  {
+    "body_id": "LAKE-001",
+    "name": "Lake Windermere",
+    "water_type": "lake",
+    "area_km2": 14.73,
+    "latitude": 54.3500,
+    "longitude": -2.9300,
+    "max_depth_m": 64,
+    "protected_sites_nearby": ["SSSI-003"],
+    "water_quality_status": "good"
+  },
+  {
+    "body_id": "LAKE-002",
+    "name": "Loch Lomond",
+    "water_type": "lake",
+    "area_km2": 71,
+    "latitude": 56.1000,
+    "longitude": -4.6000,
+    "max_depth_m": 190,
+    "protected_sites_nearby": [],
+    "water_quality_status": "high"
+  },
+  {
+    "body_id": "COASTAL-001",
+    "name": "The Solent",
+    "water_type": "coastal",
+    "latitude": 50.8000,
+    "longitude": -1.3000,
+    "protected_sites_nearby": ["SAC-002"],
+    "water_quality_status": "good",
+    "marine_protected_areas": ["MCZ", "SAC"]
+  },
+  {
+    "body_id": "ESTUARY-001",
+    "name": "Thames Estuary",
+    "water_type": "estuary",
+    "latitude": 51.5074,
+    "longitude": 0.4278,
+    "protected_sites_nearby": ["SSSI-001"],
+    "water_quality_status": "moderate",
+    "tidal_range_m": 6.5
+  },
+  {
+    "body_id": "RIVER-003",
+    "name": "River Eden",
+    "water_type": "river",
+    "length_km": 145,
+    "latitude": 54.7382,
+    "longitude": -2.6902,
+    "catchment_area_km2": 2287,
+    "protected_sites_nearby": ["SAC-001"],
+    "water_quality_status": "high",
+    "major_tributaries": ["River Eamont", "River Caldew"]
+  },
+  {
+    "body_id": "WETLAND-001",
+    "name": "Norfolk Broads",
+    "water_type": "wetland",
+    "area_km2": 303,
+    "latitude": 52.6200,
+    "longitude": 1.6200,
+    "protected_sites_nearby": ["SSSI-004"],
+    "water_quality_status": "moderate",
+    "designation": "National Park"
+  }
+]

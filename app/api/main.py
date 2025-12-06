@@ -70,6 +70,7 @@ class IncidentResponse(BaseModel):
     priority: str | None = None
     classification: dict[str, Any] | None = None
     actions: list[str] | None = None
+    spatial_context: dict[str, Any] | None = None
     notifications: dict[str, Any] | None = None
     errors: list[str] | None = None
     timestamp: str
@@ -111,6 +112,8 @@ async def submit_incident(incident: IncidentSubmission):
             incident_type=incident.incident_type,
             description=incident.description,
             location=incident.location,
+            latitude=incident.latitude,
+            longitude=incident.longitude,
             reporter_email=incident.reporter_email,
             urgency=incident.urgency or "medium"
         )
@@ -131,6 +134,7 @@ async def submit_incident(incident: IncidentSubmission):
             priority=result.get("priority"),
             classification=result.get("classification"),
             actions=result.get("actions"),
+            spatial_context=result.get("spatial_context"),
             notifications=result.get("notifications"),
             errors=result.get("errors", []),
             timestamp=datetime.utcnow().isoformat()
